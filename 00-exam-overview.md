@@ -8,11 +8,9 @@
 |---|---|
 | Questions | **65** in total: 50 scored + 15 unscored (unscored ones are not marked, so treat every question as scored) |
 | Time | **90 minutes** (about 1.4 minutes per question) |
-| Question types | **Multiple choice** (1 correct of 4) and **multiple response** (2 or more correct of 5 or more) |
 | Pass mark | Scaled score **700 out of 1,000** |
 | Scoring | Compensatory: you only need to pass overall, not each domain |
 | Unanswered | Marked wrong; **no penalty for guessing**, so answer everything |
-| Cost / validity | 100 USD; certificate valid for 3 years |
 | Delivery | Pearson VUE test centre or online proctored |
 
 📖 **AWS docs:** [Exam page](https://aws.amazon.com/certification/certified-cloud-practitioner/) · [Exam guide](https://docs.aws.amazon.com/aws-certification/latest/cloud-practitioner-02/cloud-practitioner-02.html) · [Certification FAQs](https://aws.amazon.com/certification/faqs/)
@@ -123,4 +121,4 @@
 - [Exam appointment details](https://aws.amazon.com/certification/certified-cloud-practitioner/)
 - [Exam policies](https://aws.amazon.com/certification/policies/)
 - [AWS Documentation home](https://docs.aws.amazon.com/)
-- Every service note in this repo ends with a **📖 AWS docs** line so you can read beyond the exam-level summary.
+- Every service note in this repo ends with a **📖 AWS docs** line so you can read beyond the exam-level summary. Also note reading this repo does note assure a pass on the exam it is ment just to take the load of the notes and simply the learning in bits so that you can focus on you weak spots. ensure to read actual AWS Documentation for actual deeper understanding.
