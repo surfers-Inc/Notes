@@ -353,6 +353,22 @@
 📖 **AWS docs:** [What is AWS Transit Gateway?](https://docs.aws.amazon.com/vpc/latest/tgw/what-is-transit-gateway.html)
 
 
+## Amazon VPC Peering
+
+📌 **What is it?** A private, one-to-one network connection between two VPCs, so resources in either one can talk to each other as if they were on the same network. Think of a private bridge between two buildings.
+
+🎯 **Need to Know for the Exam (Key Keywords)**
+
+- Connects **two VPCs** using private IP addresses; no internet gateway, VPN, or separate hardware needed.
+- Works **within one Region, across Regions** (inter-Region peering), and **across AWS accounts**.
+- **No overlapping CIDR blocks** are allowed between the two VPCs.
+- **Not transitive:** if VPC A peers with B and B peers with C, A still cannot reach C. Each pair needs its own peering connection.
+- You must **update route tables** on both sides after the connection is accepted.
+- No charge to create the peering connection; normal **data transfer charges** apply (for example across AZs or Regions).
+
+⚠️ **Exam Trap / Common Distractor:** Peering links exactly two VPCs and does not chain. For many VPCs or on-premises networks use **Transit Gateway**; to share one service only, use **PrivateLink**.
+
+📖 **AWS docs:** [What is VPC peering?](https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html) · [VPC peering basics and limitations](https://docs.aws.amazon.com/vpc/latest/peering/vpc-peering-basics.html)
 
 ## AWS Site-to-Site VPN
 
@@ -382,6 +398,8 @@
 
 📖 **AWS docs:** [What is AWS Client VPN?](https://docs.aws.amazon.com/vpn/latest/clientvpn-admin/what-is.html)
 
+
+
 ## Connectivity chooser
 
 | Requirement | Choose |
@@ -390,6 +408,7 @@
 | Private subnet reaches the internet outbound only | NAT gateway |
 | Private access to one service without the internet | PrivateLink |
 | Connect many VPCs and on-premises networks | Transit Gateway |
+| Private link between two VPCs (same or different account/Region) | VPC peering |
 | Quick encrypted link from an office or data centre | Site-to-Site VPN |
 | Dedicated private link, steady high volume | Direct Connect |
 | Individual remote users | Client VPN |
