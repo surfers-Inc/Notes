@@ -144,6 +144,66 @@ See [Security and compliance](04-security-and-compliance.md#aws-organizations) f
 
 📖 **AWS docs:** [What is AWS CloudFormation?](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html)
 
+### Key terms
+
+| Term | Meaning |
+|---|---|
+| **Template** | The YAML or JSON file that describes the resources you want |
+| **Stack** | The group of resources CloudFormation creates, updates, and deletes together from one template |
+| **Change set** | A preview of what an update will change, before you apply it |
+| **Drift detection** | Finds resources that were changed manually outside CloudFormation |
+| **Rollback** | If creation fails, CloudFormation undoes what it built so you are not left with a half-built stack |
+
+### Template anatomy (the sections)
+
+Sections appear in this order. **Only `Resources` is required.** Everything else is optional.
+
+| Section | What it is | Easy way to remember | Exam keyword |
+|---|---|---|---|
+| **AWSTemplateFormatVersion** | The template format version. The only valid value is `2010-09-09` | The template's version stamp | Format version |
+| **Description** | A text note about what the template does. It must come right after the format version | The title on the blueprint | Description |
+| **Metadata** | Extra information about the template or a resource, for example how the console groups and orders parameters, or configuration for instance setup | Notes in the margin | Additional information |
+| **Parameters** | Values you pass in **when you create or update a stack** (instance type, key pair, environment name). Can have defaults and allowed values | Blanks to fill in at deploy time | Input, customise, reuse the same template |
+| **Rules** | Checks that validate parameters, or combinations of them, before anything is created | A form that rejects bad answers | Validate parameters |
+| **Mappings** | Fixed lookup tables written into the template, such as Region to AMI ID | A phone book inside the template | Lookup, per-Region values |
+| **Conditions** | True/false tests that decide whether a resource is created (for example only in `prod`) | An "if" statement | Create only if, environment-aware |
+| **Transform** | Tells CloudFormation to process the template with a macro, for example AWS SAM for serverless apps or snippets stored in S3 | A pre-processor | SAM, macros |
+| **Resources** (required) | The AWS resources to build, each with a name, a `Type` such as `AWS::EC2::Instance`, and `Properties` | The actual building materials | What to create |
+| **Outputs** | Values returned after the stack is built (a website URL, a bucket name, an instance ID). They can be **exported** so other stacks can import them | The receipt after the build | Return values, cross-stack reference |
+
+### Mini example
+
+```yaml
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Small web server
+Parameters:                      # asked for at deploy time
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    AllowedValues: [t3.micro, t3.small]
+Mappings:                        # fixed lookup table (IDs are placeholders)
+  RegionMap:
+    us-east-1: { AMI: ami-11111111 }
+    eu-west-1: { AMI: ami-22222222 }
+Resources:                       # required: what to create
+  WebServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
+Outputs:                         # returned after creation
+  InstanceId:
+    Description: ID of the web server
+    Value: !Ref WebServer
+```
+
+- **Intrinsic functions** such as `!Ref`, `!GetAtt`, `!FindInMap`, `!If`, and `!ImportValue` connect the sections together.
+- Quick test: "values chosen at deploy time" means **Parameters**; "fixed table by Region" means **Mappings**; "create only in production" means **Conditions**; "return the URL or ID" means **Outputs**.
+
+⚠️ **Exam Trap / Common Distractor:** **Parameters** change per deployment (you supply them). **Mappings** are fixed inside the template. Only **Resources** is mandatory, and **Outputs** does not create anything; it only reports values.
+
+📖 **AWS docs:** [Template anatomy](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-anatomy.html) · [Parameters](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/parameters-section-structure.html) · [Mappings](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/mappings-section-structure.html) · [Conditions](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/conditions-section-structure.html) · [Resources](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html) · [Outputs](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/outputs-section-structure.html) · [Metadata](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/metadata-section-structure.html) · [Change sets](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html) · [Drift detection](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-drift.html)
+
 ## AWS Systems Manager
 
 📌 **What is it?** Centrally views and operates supported AWS, on-premises, and multicloud nodes. Think of a remote operations console for a fleet of machines.
