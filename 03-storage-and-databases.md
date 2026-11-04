@@ -74,8 +74,8 @@
 
 ⚠️ **Exam Trap / Common Distractor:** EBS is not a multi-AZ shared file system. Use EFS when many Linux instances need the same files.
 
--Also used as a storage for AWS RDS databases.
-**Amazon Data Lifecycle Manage** - is a service designed to automate the creation, retention and deletion of Amazon EBS snapshots and EBS-backed AMI's.
+- Also used as a storage for AWS RDS databases.
+- **Amazon Data Lifecycle Manage** - is a service designed to automate the creation, retention and deletion of Amazon EBS snapshots and EBS-backed AMI's.
 
 📖 **AWS docs:** [What is Amazon EBS?](https://docs.aws.amazon.com/ebs/latest/userguide/what-is-ebs.html)
 
