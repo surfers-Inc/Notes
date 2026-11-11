@@ -410,6 +410,7 @@
 | Connect many VPCs and on-premises networks | Transit Gateway |
 | Private link between two VPCs (same or different account/Region) | VPC peering |
 | Quick encrypted link from an office or data centre | Site-to-Site VPN |
+| enables private connectivity from your VPC to supported AWS services | VPC Endpoint |
 | Dedicated private link, steady high volume | Direct Connect |
 | Individual remote users | Client VPN |
 | Name-to-address routing | Route 53 |
