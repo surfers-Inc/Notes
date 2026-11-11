@@ -7,7 +7,7 @@
 📌 **What is it?** Monitoring and observability service for AWS resources and applications. Think of a dashboard, logbook, and alarm system for cloud workloads.
 
 🎯 **Need to Know for the Exam (Key Keywords)**
-
+-.Amazon CloudWatch billing metric data is stored in which AWS Region? are stored in US East (N. Virginia) . us-east-1
 - Collects **metrics**, **logs**, and events; dashboards visualise health and **alarms** trigger actions or notifications.
 - Common uses: CPU monitoring, application logs, operational dashboards, and Auto Scaling alarms.
 - Basic monitoring for some services is included; custom/detailed metrics, logs, alarms, and dashboards can incur charges.
