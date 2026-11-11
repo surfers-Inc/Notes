@@ -28,6 +28,7 @@
 - Stores **objects** in globally unique-named **buckets**; supports versioning, encryption, access policies, replication, and static website hosting.
 - **Strong read-after-write consistency**; designed for 11 nines of durability across multiple AZs.
 - Pay for storage, requests, retrieval for some classes, and data transfer; lifecycle rules move or expire objects automatically.
+- encrypted by default
 
 ⚠️ **Exam Trap / Common Distractor:** S3 is object storage, not an EC2 boot disk or shared POSIX file system.
 
@@ -130,6 +131,7 @@
 - **Hybrid:** on-premises applications use standard protocols while data lives in AWS.
 - Four gateway types: **S3 File Gateway** (NFS/SMB to S3), **FSx File Gateway** (SMB to FSx for Windows), **Volume Gateway** (iSCSI block volumes backed by S3, with EBS snapshots), **Tape Gateway** (virtual tape library for backup apps).
 - Caches frequently used data locally for low latency.
+- encrypted by default
 
 ⚠️ **Exam Trap / Common Distractor:** Storage Gateway bridges on-premises and AWS storage. It is not a general file system in AWS (EFS/FSx) and not a bulk migration tool (DataSync).
 
