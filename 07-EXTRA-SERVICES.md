@@ -1,0 +1,1 @@
+- **AWS Device Farm**  a tool/service that can provide access to different mobile devices with variations in firmware and Operating System versions
