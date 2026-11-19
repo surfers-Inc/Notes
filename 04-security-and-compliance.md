@@ -1,409 +1,607 @@
 # 04 — Security and Compliance
 
-[← Storage and databases](03-storage-and-databases.md) | [Index](README.md) | [Management and analytics →](05-management-and-analytics.md)
+[← Storage and databases](03-storage-and-databases.md) | [Index](README.md) | [Management and governance →](05-management-and-governance.md)
+
+> **How to read each card:** 📘 how AWS describes it · 💡 how to remember it · 🔑 words that point to it in a question · 🎯 what the exam actually asks about it · ⚠️ the wrong answer you will be tempted by · 📖 where to read more.
+>
+> Security and Compliance is the **heaviest-weighted domain after Technology (30%)**. Most questions are "which service does X?" or "is this AWS's job or mine?"
+
+## Contents
+
+- **Foundations:** [Shared Responsibility Model](#shared-responsibility-model) · [Compliance and governance](#compliance-and-governance) · [Encryption](#encryption-at-rest-and-in-transit) · [Where to find logs](#where-to-find-security-logs)
+- **Identity and accounts:** [IAM](#aws-identity-and-access-management-iam) · [Root user](#protecting-the-root-user) · [IAM Identity Center](#aws-iam-identity-center) · [Organizations](#aws-organizations) · [RAM](#aws-resource-access-manager-aws-ram) · [Cognito](#amazon-cognito) · [Directory Service](#aws-directory-service)
+- **Keys, secrets, and certificates:** [KMS](#aws-key-management-service-aws-kms) · [CloudHSM](#aws-cloudhsm) · [Secrets Manager](#aws-secrets-manager) · [ACM](#aws-certificate-manager-acm)
+- **Network and application protection:** [Shield](#aws-shield) · [WAF](#aws-waf) · [Firewall Manager](#aws-firewall-manager)
+- **Detection and investigation:** [The detection family](#the-detection-family-at-a-glance) · [GuardDuty](#amazon-guardduty) · [Inspector](#amazon-inspector) · [Macie](#amazon-macie) · [Detective](#amazon-detective) · [Security Hub](#aws-security-hub)
+- **Compliance evidence:** [Artifact](#aws-artifact) · [Security resources](#security-information-and-resources)
+- [Security service chooser](#security-service-chooser) · [Top traps on this page](#top-traps-on-this-page)
+
+---
 
 ## Shared Responsibility Model
 
-| AWS: security **of** the cloud | Customer: security **in** the cloud |
+**📘 AWS definition:** Security and compliance is a shared responsibility between AWS and the customer: AWS is responsible for security **of** the cloud, and the customer is responsible for security **in** the cloud.
+
+**💡 Simple definition:** **AWS is the landlord, you are the tenant.** The landlord secures the building, walls, and wiring; you lock your own door and decide who gets a key. **AWS = OF the cloud. You = IN the cloud.**
+
+**🔑 Exam keywords:** `security of the cloud` · `security in the cloud` · `customer responsibility` · `AWS responsibility` · `shared controls`
+
+**🎯 What they test**
+
+| AWS: security **OF** the cloud | Customer: security **IN** the cloud |
 |---|---|
-| Physical facilities and hardware | Data classification and protection |
-| AWS global infrastructure | IAM users, roles, policies, and MFA |
-| Host operating system and virtualisation | Network and resource configuration |
-| Managed-service infrastructure | Guest OS and applications on EC2 |
+| Physical data centres, guards, hardware | **Customer data** (classification, encryption choices) |
+| Global infrastructure: Regions, AZs, edge locations | **IAM**: users, roles, policies, MFA |
+| Host OS and virtualisation (hypervisor) | **Guest OS** patching and applications on EC2 |
+| Network infrastructure | Security groups, NACLs, firewall configuration |
+| Managed-service software (for example the RDS engine patching, Lambda runtime) | Client- and server-side encryption settings, network traffic protection |
 
-- Responsibility changes with the service. Customers do more for **EC2**, less for **RDS**, and still less infrastructure work for **Lambda**.
-- AWS and customers share areas such as patch management, configuration management, and security awareness and training, but each patches/configures its own part.
+**How it shifts by service** (the more managed the service, the less you do):
 
-⚠️ **Exam trap:** AWS does not secure customer data, IAM policies, security groups, or EC2 guest operating systems for the customer.
+| Task | EC2 (IaaS) | RDS (managed) | Lambda / S3 / DynamoDB (serverless) |
+|---|---|---|---|
+| Physical hardware, host OS | AWS | AWS | AWS |
+| Guest OS patching | **You** | AWS | AWS |
+| Database engine patching | **You** (if self-installed) | AWS | — |
+| Application code | **You** | — | **You** (your function code) |
+| Network access rules (security groups) | **You** | **You** | **You** (IAM/resource policies) |
+| Data, IAM permissions, encryption choices | **You** | **You** | **You** |
 
-📖 **AWS docs:** [Shared Responsibility Model](https://aws.amazon.com/compliance/shared-responsibility-model/)
+**Shared controls** (both parties, each on its own layer): **patch management**, **configuration management**, and **awareness and training**.
 
-## Security, governance, and compliance concepts
+**⚠️ Exam traps**
 
-### Compliance and governance
+- **Data is always the customer's responsibility**, no matter which service.
+- AWS never patches the **guest OS on EC2** for you (unless you choose a tool such as Systems Manager to automate it; it is still your job).
+- Physical security of an **Outposts** rack in your data centre is **your** responsibility.
 
-- **Compliance** means meeting the laws, standards, and industry rules that apply to you (for example PCI DSS for card payments, HIPAA for health data, GDPR for EU personal data, SOC and ISO reports).
-- Requirements **vary by geography and industry**, and they also **vary by AWS service**: a service may be covered by one compliance program but not another. Check the *Services in Scope* list for your program.
-- AWS is responsible for compliance **of** the cloud infrastructure. You remain responsible for making **your** workload and data compliant.
-- **Governance** means setting rules and checking they are followed: policies (IAM, SCPs), monitoring (CloudWatch), auditing (CloudTrail, Config), and reports.
+📖 **Read more:** [Shared Responsibility Model](https://aws.amazon.com/compliance/shared-responsibility-model/) · [Security pillar: shared responsibility](https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/shared-responsibility.html)
 
-📖 **AWS docs:** [AWS Compliance Programs](https://aws.amazon.com/compliance/programs/) · [Services in Scope by Compliance Program](https://aws.amazon.com/compliance/services-in-scope/)
+## Compliance and governance
 
-### Encryption options
+- **Compliance** = meeting laws and standards that apply to you (PCI DSS for card payments, HIPAA for health data, GDPR for EU personal data, SOC and ISO reports).
+- Requirements vary by **country, industry, and AWS service**. Not every service is covered by every program; check **Services in Scope**.
+- AWS is compliant for the **infrastructure**; **you** must make your workload compliant. Evidence of AWS's compliance is downloaded from **AWS Artifact**.
+- **Governance** = setting rules and checking they are followed: policies (IAM, SCPs), monitoring (CloudWatch), auditing (CloudTrail, Config), and reports (Audit Manager, Artifact).
+
+📖 **Read more:** [AWS compliance programs](https://aws.amazon.com/compliance/programs/) · [Services in scope by compliance program](https://aws.amazon.com/compliance/services-in-scope/)
+
+## Encryption at rest and in transit
 
 | Type | Protects | Typical AWS tools |
 |---|---|---|
-| **Encryption in transit** | Data moving across a network (HTTPS/TLS, VPN) | ACM certificates, TLS endpoints, Site-to-Site VPN |
-| **Encryption at rest** | Data stored on disk or in a service | KMS keys with S3, EBS, RDS, DynamoDB encryption |
+| **In transit** | Data moving across a network | HTTPS/TLS with **ACM** certificates, Site-to-Site/Client VPN |
+| **At rest** | Data stored on disk or in a service | **KMS** keys with S3, EBS, RDS, DynamoDB; **CloudHSM** for dedicated hardware |
 
-A benefit of cloud security: strong controls such as encryption, monitoring, and automation are built in and easy to turn on.
+Many services now encrypt at rest **by default** (S3, DynamoDB, Storage Gateway); for others (EBS, RDS) you turn it on. Choosing and managing encryption remains a customer responsibility.
 
-### Where to find security logs
+## Where to find security logs
 
 | What you want to see | Where to look |
 |---|---|
-| Who called which AWS API | CloudTrail (Event history shows recent management events; trails deliver to S3 and CloudWatch Logs) |
-| Application, OS, and service logs; metrics and alarms | CloudWatch Logs / CloudWatch |
-| Network traffic to and from your VPC | VPC Flow Logs |
-| Resource configuration history and compliance | AWS Config |
-| Detected threats | GuardDuty findings |
-| Findings from many security services in one place | Security Hub |
+| **Who** called which AWS API, and when | **CloudTrail** |
+| Metrics, alarms, application/OS logs | **CloudWatch** / CloudWatch Logs |
+| Network traffic to and from the VPC | **VPC Flow Logs** |
+| How a resource's **configuration** changed, and whether it is compliant | **AWS Config** |
+| Detected threats | **GuardDuty** findings |
+| All security findings in one place | **Security Hub** |
 
-📖 **AWS docs:** [CloudTrail User Guide](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html) · [VPC Flow Logs](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html)
+📖 **Read more:** [What is AWS CloudTrail?](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html) · [VPC Flow Logs](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html)
+
+---
 
 ## AWS Identity and Access Management (IAM)
 
-📌 **What is it?** Controls who can access AWS and what they may do. Think of identities as staff badges and policies as the doors each badge can open.
+**📘 AWS definition:** AWS Identity and Access Management (IAM) is a web service that helps you securely control access to AWS resources: who is authenticated (signed in) and authorised (has permissions) to use them.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **Staff badges and door permissions.** Identities are the badges; **policies** list the doors each badge can open. **IAM = "I Am who I say, and I can do only this."**
 
-- **Users** represent identities, **groups** collect users, **roles** provide temporary credentials, and **policies** define permissions.
-- Apply **least privilege** (grant only what is needed), enable MFA, prefer roles over long-term access keys, and protect the root user.
-- IAM is global and has no additional charge.
+**🔑 Exam keywords:** `users` · `groups` · `roles` · `policies` · `least privilege` · `MFA` · `access keys` · `temporary credentials` · `global service`
 
-⚠️ **Exam Trap / Common Distractor:** Groups contain users, not other groups; roles are assumed and provide temporary credentials.
+**🎯 What they test**
 
-📖 **AWS docs:** [IAM User Guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/) · [IAM overview](https://docs.aws.amazon.com/whitepapers/latest/aws-overview/security-services.html#aws-identity-and-access-management)
+1. **The four building blocks**
 
-### Policy logic
+   | Item | What it is | Memory hook |
+   |---|---|---|
+   | **User** | A person or app with **long-term** credentials (password and/or access keys) | A named employee badge |
+   | **Group** | A collection of users that share policies (groups **cannot** contain groups) | A department |
+   | **Role** | An identity that is **assumed** and gives **temporary** credentials; used by AWS services (for example EC2 → S3), other accounts, or federated users | A visitor pass that expires |
+   | **Policy** | A JSON document listing allowed/denied actions on resources | The rulebook |
 
-- An implicit deny applies by default.
-- An explicit allow grants access unless another applicable policy explicitly denies it.
-- An **explicit deny overrides an allow**.
-- Identity-based policies attach to identities; resource-based policies attach to resources.
+2. **Policy logic:** everything is **denied by default** (implicit deny) → an **explicit allow** grants access → an **explicit deny always wins**.
+3. **Policy types:** **AWS managed** (written by AWS, e.g. ReadOnlyAccess), **customer managed** (your reusable policies, best for least privilege), **inline** (embedded in one identity). **Identity-based** policies attach to users/groups/roles; **resource-based** policies attach to resources (for example an S3 bucket policy).
+4. **Best practices:** **least privilege**; **MFA** everywhere; prefer **roles and temporary credentials** over long-term access keys; never share or hard-code access keys (store secrets in **Secrets Manager**); use **IAM Identity Center** for people; rotate credentials; use a **password policy**.
+5. **Access types:** **console** (password + MFA) and **programmatic** (access key ID + secret access key for CLI/SDK/API).
+6. **Federation:** users sign in with an existing identity (corporate directory via SAML 2.0, or OpenID Connect) and receive temporary credentials from **AWS STS**.
+7. **Audit tools:** **IAM credential report** (all users and the status of their passwords, keys, and MFA) and **last accessed information** / **IAM Access Analyzer** (find unused permissions and resources shared outside your account).
+8. IAM is **global** (not tied to a Region) and **free**.
 
-### Policy types
+**⚠️ Exam traps**
 
-| Type | Meaning |
-|---|---|
-| **AWS managed policy** | Created and maintained by AWS (for example read-only access); reusable |
-| **Customer managed policy** | A custom policy you write and attach to many identities; the best way to apply least privilege |
-| **Inline policy** | Embedded in a single user, group, or role; one-to-one |
+- "An EC2 instance needs to read from S3" → attach an **IAM role** to the instance; never store access keys on it.
+- Groups hold **users only**, not other groups or roles.
+- Explicit **deny** beats allow, every time.
+- IAM is for **your AWS identities**. Customers signing in to **your app** → **Cognito**.
 
-### Credentials and authentication
-
-- **Password policy:** set rules for IAM user passwords such as length, complexity, and expiry.
-- **Access keys** (access key ID and secret) give programmatic access (CLI, SDK, API). Rotate them, never share them, and never hard-code them in code. Prefer roles with temporary credentials.
-- **Store credentials safely** in **AWS Secrets Manager** or **Systems Manager Parameter Store**, not in code or files.
-- **MFA** adds a second factor on top of a password (for example an authenticator app or a hardware/security key).
-- **Federated identity:** users sign in with an existing identity (corporate directory, social login) and receive temporary access, instead of having their own IAM user. Federation uses SAML 2.0 or OpenID Connect, or **IAM Identity Center**.
-- **Cross-account IAM role:** lets a user or service in one account assume a role in another account without sharing long-term credentials.
-
-### Access reports
-
-- **Credential report:** an account-wide list of IAM users and the status of their passwords, access keys, and MFA.
-- **Last accessed information:** shows when permissions were last used, so you can remove unused permissions and tighten least privilege.
-
-📖 **AWS docs:** [Temporary credentials (STS)](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html) · [IAM security best practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)
+📖 **Read more:** [What is IAM?](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html) · [IAM security best practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html) · [Policy evaluation logic](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html) · [IAM roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) · [Temporary credentials (STS)](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html)
 
 ### Protecting the root user
 
-- Use a strong, unique password and **MFA** (AWS now requires MFA for root users; you add it at sign-up or when prompted).
-- **Do not create root access keys**, and delete any that exist.
-- Do not use root for everyday work; use an administrative user (ideally in IAM Identity Center) instead. Monitor root sign-in activity.
+The **root user** is the email address that created the account; it has **complete, unrestricted** access.
 
-**Tasks only the root user can perform** (AWS current list):
+- Use a strong password and **MFA** (AWS now requires MFA for root users).
+- **Do not create root access keys**; delete any that exist.
+- Do not use root for daily work; create an administrative user (ideally in IAM Identity Center) and lock root away.
 
-- Change the root user's email address, password, or access keys (standalone account).
-- Close a standalone AWS account.
-- **Restore IAM user permissions** when the only IAM administrator locks themselves out.
-- Activate IAM access to the Billing and Cost Management console, and view certain tax invoices.
-- Sign up for AWS GovCloud (US).
-- Register as a seller in the EC2 Reserved Instance Marketplace.
-- Configure an S3 bucket for MFA Delete.
-- Edit or delete an S3 bucket policy (or SQS resource policy) that denies all principals.
+**Tasks only the root user can do** (common exam list):
 
-⚠️ **Exam Trap / Common Distractor:** Older study material also lists "change the support plan" as root-only. AWS now also allows an IAM user with the right permissions to do this. Many other settings (account name, contact details) no longer need root either.
+- Change the account's root email address, root password, or root access keys.
+- **Close** the AWS account.
+- **Restore IAM user permissions** if the only IAM administrator locks themselves out.
+- Activate IAM access to the **Billing and Cost Management** console; view certain tax invoices.
+- Sign up for **AWS GovCloud (US)**.
+- Register as a seller in the **EC2 Reserved Instance Marketplace**.
+- Configure an S3 bucket for **MFA Delete**.
+- Edit or delete an S3 bucket policy (or SQS policy) that **denies all principals**.
 
-📖 **AWS docs:** [AWS account root user and tasks that require it](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html) · [Root user best practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/root-user-best-practices.html)
+⚠️ **Exam trap:** older material says "change the support plan" is root-only. AWS now also allows an IAM user with the right permissions to do it.
+
+📖 **Read more:** [Tasks that require root user credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html) · [Root user best practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/root-user-best-practices.html)
+
+---
 
 ## AWS IAM Identity Center
 
-📌 **What is it?** Central single sign-on (SSO) for your workforce across multiple AWS accounts and business applications. Think of one front door and one badge for every account. It was formerly called AWS Single Sign-On.
+**📘 AWS definition:** AWS IAM Identity Center is the recommended AWS service for managing workforce access to AWS applications and multiple AWS accounts.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **One login for employees to every AWS account and business app.** (Formerly **AWS Single Sign-On**.)
 
-- **Workforce SSO** across accounts in AWS Organizations; users sign in once at a user portal.
-- Connects to a corporate directory or uses its own; supports SAML 2.0 business apps (for example Salesforce, Microsoft 365).
-- AWS recommends it for daily administrator access instead of using the root user.
+**🔑 Exam keywords:** `single sign-on (SSO)` · `workforce` · `multiple accounts` · `user portal` · `corporate directory` · `permission sets`
 
-⚠️ **Exam Trap / Common Distractor:** Identity Center is for your employees and AWS access. Cognito is for the customers of your application.
+**🎯 What they test**
 
-📖 **AWS docs:** [IAM Identity Center](https://aws.amazon.com/iam/identity-center/) · [Getting started](https://docs.aws.amazon.com/singlesignon/latest/userguide/getting-started.html)
+- Employees sign in once at a **user portal** and reach every assigned account (in AWS Organizations) and SAML apps (for example Microsoft 365, Salesforce).
+- Identities can live in Identity Center itself or come from an existing directory (Microsoft AD, Okta, Microsoft Entra ID).
+- **Permission sets** define what users can do in each account.
+
+**⚠️ Exam traps**
+
+- Identity Center = **employees**. Cognito = **your app's customers**.
+
+📖 **Read more:** [What is IAM Identity Center?](https://docs.aws.amazon.com/singlesignon/latest/userguide/what-is.html)
+
+---
 
 ## AWS Organizations
 
-📌 **What is it?** Centrally manages and governs multiple AWS accounts. Think of a head office grouping branches under common billing and guardrails.
+**📘 AWS definition:** AWS Organizations is an account management service that lets you consolidate multiple AWS accounts into an organisation that you create and centrally manage.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **Head office for all your AWS accounts.** One bill, folders (OUs) for grouping accounts, and guardrails (SCPs) that limit what any account can do.
 
-- **Organizational units (OUs)** group accounts; **Service Control Policies (SCPs)** set maximum available permissions.
-- Supports consolidated billing, central governance, and account creation.
-- Organizations itself has no additional charge; member accounts still pay for resources.
+**🔑 Exam keywords:** `multiple accounts` · `consolidated billing` · `organisational units (OUs)` · `service control policies (SCPs)` · `management account` · `volume discounts`
 
-⚠️ **Exam Trap / Common Distractor:** An SCP does not grant permissions. IAM policies must still allow the action, and an SCP can restrict it.
+**🎯 What they test**
 
-📖 **AWS docs:** [What is AWS Organizations?](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html)
+- **Management account** (the payer) + **member accounts**, grouped into **organisational units (OUs)**.
+- **Consolidated billing:** one bill for all accounts; usage is **combined** for **volume pricing discounts**, and Reserved Instance / Savings Plans discounts can be **shared** across accounts. No extra charge.
+- **Service control policies (SCPs):** set the **maximum** permissions for accounts or OUs (for example "no one may leave the eu-west-1 Region" or "no one may disable CloudTrail"). They apply even to the member account's root user.
+- Create accounts programmatically; apply backup policies and tag policies centrally.
+- **AWS Control Tower** builds on Organizations to set up a governed multi-account "landing zone" automatically (see [Management and governance](05-management-and-governance.md#aws-control-tower)).
+
+**⚠️ Exam traps**
+
+- An SCP **never grants** permissions. It only **limits** them; IAM policies must still allow the action.
+- SCPs do **not** affect the **management account**.
+- "One bill for many accounts" → Organizations (consolidated billing), not Cost Explorer.
+
+📖 **Read more:** [What is AWS Organizations?](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html) · [Service control policies](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html) · [Consolidated billing](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/consolidated-billing.html)
+
+---
 
 ## AWS Resource Access Manager (AWS RAM)
 
-📌 **What is it?** Securely shares AWS resources with other accounts, your organization, or OUs, so you create a resource once instead of duplicating it. Think of lending one tool to several teams.
+**📘 AWS definition:** AWS Resource Access Manager (AWS RAM) helps you securely share your resources across AWS accounts, within your organisation or organisational units, and with IAM roles and users.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **Lend one tool to several teams** instead of buying each team its own.
 
-- Share resources such as subnets, transit gateways, License Manager configurations, and Route 53 Resolver rules.
-- Works within AWS Organizations or with specific accounts.
-- No additional charge for RAM itself.
+**🔑 Exam keywords:** `share resources across accounts` · `avoid duplication` · `shared subnets` · `Transit Gateway sharing`
 
-⚠️ **Exam Trap / Common Distractor:** RAM shares resources. It does not grant IAM permissions across accounts (roles do that).
+**🎯 What they test**
 
-📖 **AWS docs:** [What is AWS RAM?](https://docs.aws.amazon.com/ram/latest/userguide/what-is.html) · [Shareable resources](https://docs.aws.amazon.com/ram/latest/userguide/shareable.html)
+- Share resources such as **VPC subnets, Transit Gateways, License Manager configurations, Route 53 Resolver rules**.
+- No extra charge.
+
+**⚠️ Exam traps**
+
+- RAM **shares resources**; cross-account **permissions** come from IAM roles.
+
+📖 **Read more:** [What is AWS RAM?](https://docs.aws.amazon.com/ram/latest/userguide/what-is.html)
+
+---
 
 ## Amazon Cognito
 
-📌 **What is it?** Adds sign-up, sign-in, and access control for web and mobile application users. Think of a managed customer login desk.
+**📘 AWS definition:** Amazon Cognito is an identity platform for web and mobile apps: a user directory, an authentication server, and an authorisation service for OAuth 2.0 access tokens and AWS credentials.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **The sign-up and sign-in screen for your app's customers**, run by AWS. "**Cog**nito" → recognise (identify) your app users.
 
-- **User pools** provide user directories and authentication; **identity pools** provide temporary AWS credentials.
-- Supports social and enterprise identity providers and MFA.
-- Pricing is primarily based on monthly active users and enabled features.
+**🔑 Exam keywords:** `app users` · `sign-up / sign-in` · `mobile and web apps` · `social login (Google, Facebook, Apple)` · `user pools` · `identity pools` · `millions of users`
 
-⚠️ **Exam Trap / Common Distractor:** Cognito is for application end users; IAM manages access for AWS workforce identities and workloads.
+**🎯 What they test**
 
-📖 **AWS docs:** [What is Amazon Cognito?](https://docs.aws.amazon.com/cognito/latest/developerguide/what-is-amazon-cognito.html)
+- **User pools:** user directory + sign-in (including social and SAML identity providers, MFA).
+- **Identity pools:** give signed-in (or guest) users **temporary AWS credentials** to call AWS services directly.
+- Priced mainly by **monthly active users**.
+
+**⚠️ Exam traps**
+
+- Customers of **your application** → Cognito. **Employees** → IAM Identity Center. **AWS workloads** → IAM roles.
+
+📖 **Read more:** [What is Amazon Cognito?](https://docs.aws.amazon.com/cognito/latest/developerguide/what-is-amazon-cognito.html)
+
+---
 
 ## AWS Directory Service
 
-📌 **What is it?** Managed Microsoft Active Directory (AWS Managed Microsoft AD) in the AWS Cloud. Think of a company user directory that AWS runs for you.
+**📘 AWS definition:** AWS Directory Service provides multiple ways to use Microsoft Active Directory (AD) with other AWS services.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **Microsoft Active Directory, run by AWS** (or connected to the one you already have).
 
-- Built on real Microsoft Active Directory; supports Group Policy and SSO.
-- Lets EC2, RDS for SQL Server, and WorkSpaces join a domain and use existing AD users and groups.
-- Can connect to IAM Identity Center; pay per directory.
+**🔑 Exam keywords:** `Microsoft Active Directory` · `domain join` · `Group Policy` · `AD Connector` · `Windows workloads`
 
-⚠️ **Exam Trap / Common Distractor:** Directory Service is for Active Directory workloads. Cognito handles app customers and IAM Identity Center handles AWS workforce sign-in.
+**🎯 What they test**
 
-📖 **AWS docs:** [AWS Directory Service](https://docs.aws.amazon.com/whitepapers/latest/aws-overview/security-services.html#aws-directory-service) · [Admin guide](https://docs.aws.amazon.com/directoryservice/latest/admin-guide/what_is.html)
+- **AWS Managed Microsoft AD:** a real Microsoft AD run by AWS. **AD Connector:** a proxy to your **on-premises** AD (no directory data stored in AWS).
+- Lets EC2 Windows instances, RDS for SQL Server, WorkSpaces, and FSx for Windows use existing AD users and groups.
+
+**⚠️ Exam traps**
+
+- "Active Directory" in the question → Directory Service, not Cognito.
+
+📖 **Read more:** [What is AWS Directory Service?](https://docs.aws.amazon.com/directoryservice/latest/admin-guide/what_is.html)
+
+---
 
 ## AWS Key Management Service (AWS KMS)
 
-📌 **What is it?** Managed service for creating and controlling encryption keys. Think of a guarded key cabinet integrated with AWS services.
+**📘 AWS definition:** AWS Key Management Service (AWS KMS) is a managed service that makes it easy for you to create and control the cryptographic keys that protect your data.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **A guarded key cabinet built into AWS.** S3, EBS, RDS, and many others fetch keys from it to encrypt your data. Every use of a key is logged in CloudTrail.
 
-- Creates and controls KMS keys; supports key policies, rotation options, and auditing through CloudTrail.
-- Integrates with services for encryption at rest and supports envelope encryption.
-- AWS owned keys are free; customer managed keys and API requests can incur charges.
+**🔑 Exam keywords:** `encryption keys` · `encryption at rest` · `create and control keys` · `key rotation` · `key policy` · `integrated with AWS services` · `audit key usage`
 
-⚠️ **Exam Trap / Common Distractor:** KMS manages encryption keys; Secrets Manager stores and rotates secret values such as passwords.
+**🎯 What they test**
 
-📖 **AWS docs:** [What is AWS KMS?](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html)
+- **Key types by owner:**
+
+  | Key | Who manages it | Cost |
+  |---|---|---|
+  | **AWS owned keys** | AWS, used invisibly across accounts | Free |
+  | **AWS managed keys** (`aws/s3`, `aws/ebs`…) | AWS creates them in your account; rotation automatic | No monthly fee |
+  | **Customer managed keys** | **You** control policy, rotation, disabling, deletion | Monthly fee per key + requests |
+
+- Keys never leave KMS's FIPS-validated hardware security modules unencrypted; KMS is **multi-tenant** (shared HSMs run by AWS).
+- Control with **key policies** and IAM; all usage audited in **CloudTrail**.
+
+**⚠️ Exam traps**
+
+- KMS manages **keys**. Secrets Manager stores **secret values** (passwords). ACM manages **certificates**.
+- "Single-tenant", "dedicated HSM", "you control the hardware module" → **CloudHSM**, not KMS.
+
+📖 **Read more:** [What is AWS KMS?](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html) · [AWS KMS concepts](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html)
+
+---
 
 ## AWS CloudHSM
 
-📌 **What is it?** A cloud-based **hardware security module (HSM)** for generating and using your own encryption keys on dedicated hardware. Think of renting a private, tamper-resistant safe just for your keys.
+**📘 AWS definition:** AWS CloudHSM offers secure cryptographic key storage by making hardware security modules (HSMs) available in the AWS Cloud.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **Renting your own private safe** for keys, not a locker in a shared room. **HSM = Hardware Security Module.**
 
-- **Dedicated** FIPS 140-2 Level 3 validated HSMs; you manage your own keys.
-- Used when rules or contracts require single-tenant hardware key storage.
-- AWS handles provisioning, patching, and backups; pay per HSM per hour.
+**🔑 Exam keywords:** `dedicated HSM` · `single-tenant` · `FIPS Level 3` · `customer-controlled keys` · `regulatory requirement for dedicated hardware`
 
-⚠️ **Exam Trap / Common Distractor:** KMS is the simpler managed key service. Choose CloudHSM when the question says dedicated hardware or you must control the HSM.
+**🎯 What they test**
 
-📖 **AWS docs:** [AWS CloudHSM](https://docs.aws.amazon.com/whitepapers/latest/aws-overview/security-services.html#aws-cloudhsm) · [User guide](https://docs.aws.amazon.com/cloudhsm/latest/userguide/introduction.html)
+- **Single-tenant**, FIPS-validated (Level 3) HSMs in your VPC; **you** manage the keys and users. AWS manages provisioning, patching, and backups of the hardware.
+- Pay per HSM per hour.
+
+**⚠️ Exam traps**
+
+- AWS **cannot** recover your keys if you lose your CloudHSM credentials.
+
+📖 **Read more:** [What is AWS CloudHSM?](https://docs.aws.amazon.com/cloudhsm/latest/userguide/introduction.html)
+
+---
 
 ## AWS Secrets Manager
 
-📌 **What is it?** Securely stores, retrieves, and can rotate credentials and other secrets. Think of a password vault applications can open with permission.
+**📘 AWS definition:** AWS Secrets Manager helps you manage, retrieve, and rotate database credentials, application credentials, API keys, and other secrets throughout their lifecycles.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **A password vault for applications** that can also change (rotate) the passwords automatically.
 
-- Stores database credentials, API keys, and tokens encrypted with KMS.
-- Supports automatic rotation for supported secrets (for example RDS, Redshift, DocumentDB) and fine-grained access.
-- Pay per secret stored and API calls.
+**🔑 Exam keywords:** `store credentials` · `automatic rotation` · `database passwords` · `API keys` · `do not hard-code secrets`
 
-⚠️ **Exam Trap / Common Distractor:** Do not hard-code credentials. KMS protects keys; Secrets Manager manages secret values and rotation.
+**🎯 What they test**
 
-📖 **AWS docs:** [What is AWS Secrets Manager?](https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html)
+- Stores secrets encrypted with KMS; apps fetch them at run time with IAM permission.
+- **Automatic rotation** (built-in for RDS, Aurora, Redshift, DocumentDB; Lambda for others).
+- Pay per secret per month plus API calls.
+
+**⚠️ Exam traps**
+
+- **Rotation** is the key differentiator. **Systems Manager Parameter Store** can also store secrets (cheaper/free tier) but does not rotate them automatically.
+
+📖 **Read more:** [What is AWS Secrets Manager?](https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html)
+
+---
 
 ## AWS Certificate Manager (ACM)
 
-📌 **What is it?** Provisions and manages public and private SSL/TLS certificates for supported AWS services. Think of an automated issuer and renewer for website identity cards.
+**📘 AWS definition:** AWS Certificate Manager (ACM) handles the complexity of creating, storing, and renewing public and private SSL/TLS X.509 certificates and keys that protect your AWS websites and applications.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **Free, auto-renewing padlocks (HTTPS certificates)** for your websites on AWS.
 
-- Integrates with services such as Elastic Load Balancing, CloudFront, and API Gateway.
-- Public certificates used with integrated AWS services can be provisioned and renewed automatically.
-- Public certificates for integrated services have no additional certificate charge; private CA features cost money.
+**🔑 Exam keywords:** `SSL/TLS certificates` · `HTTPS` · `encryption in transit` · `automatic renewal`
 
-⚠️ **Exam Trap / Common Distractor:** ACM manages certificates (encryption in transit); KMS manages encryption keys used to protect data at rest.
+**🎯 What they test**
 
-📖 **AWS docs:** [What is AWS Certificate Manager?](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html)
+- **Public certificates are free** when used with integrated services (ELB, CloudFront, API Gateway) and **renew automatically**.
+- **AWS Private CA** issues private certificates (paid).
 
-## Amazon Macie
+**⚠️ Exam traps**
 
-📌 **What is it?** Discovers and protects sensitive data in Amazon S3 using machine learning and pattern matching. Think of a scanner that spots personal data lying around in your buckets.
+- ACM = encryption **in transit** (certificates). KMS = encryption **at rest** (keys).
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+📖 **Read more:** [What is AWS Certificate Manager?](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html)
 
-- Finds **sensitive data** such as personally identifiable information (PII), financial data, and health information in **S3**.
-- Also reports on bucket security: unencrypted, publicly accessible, or shared outside your organization.
-- Findings can go to Security Hub and EventBridge; pay for bucket evaluation and data inspected.
-
-⚠️ **Exam Trap / Common Distractor:** Macie looks at data in S3. GuardDuty detects threats, and Inspector finds software vulnerabilities.
-
-📖 **AWS docs:** [What is Amazon Macie?](https://docs.aws.amazon.com/macie/latest/user/what-is-macie.html)
+---
 
 ## AWS Shield
 
-📌 **What is it?** Managed protection against distributed denial-of-service (DDoS) attacks. Think of crowd control that keeps malicious traffic floods away.
+**📘 AWS definition:** AWS Shield is a managed service that provides protection against distributed denial of service (DDoS) attacks for applications running on AWS.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **Crowd control** that stops a flood of fake visitors from knocking your site over. Picture a **shield** taking the hits.
 
-- **Shield Standard** provides automatic baseline DDoS protection at no extra cost.
-- **Shield Advanced** adds enhanced protection, visibility, specialist response (the AWS DDoS Response Team), and cost protection for eligible resources.
-- Standard is included; Advanced has a subscription and usage-related conditions.
+**🔑 Exam keywords:** `DDoS` · `distributed denial of service` · `SYN flood / UDP reflection` · `always-on protection` · `cost protection` · `Shield Response Team`
 
-⚠️ **Exam Trap / Common Distractor:** Shield protects against DDoS; WAF filters malicious web requests such as SQL injection.
+**🎯 What they test**
 
-📖 **AWS docs:** [AWS Shield](https://docs.aws.amazon.com/whitepapers/latest/aws-overview/security-services.html#aws-shield) · [Shield overview](https://docs.aws.amazon.com/waf/latest/developerguide/ddos-overview.html)
+| | **Shield Standard** | **Shield Advanced** |
+|---|---|---|
+| Cost | **Free, automatic** for all customers | Paid subscription (monthly fee, 1-year commitment) |
+| Protects against | Common network/transport-layer (layer 3/4) attacks | Larger and more sophisticated attacks, including application layer with WAF |
+| Extras | — | 24/7 access to the **Shield Response Team (SRT)**, real-time attack visibility, **cost protection** against scaling charges caused by DDoS, WAF included for protected resources |
+| Resources | Everything, especially CloudFront and Route 53 | EC2 Elastic IPs, ELB, CloudFront, Global Accelerator, Route 53 |
+
+**⚠️ Exam traps**
+
+- **DDoS** → Shield. **SQL injection / cross-site scripting** → WAF.
+- "Protection from **charges** caused by a DDoS spike" → **Shield Advanced** (cost protection).
+
+📖 **Read more:** [How AWS Shield works](https://docs.aws.amazon.com/waf/latest/developerguide/ddos-overview.html) · [Shield Advanced overview](https://docs.aws.amazon.com/waf/latest/developerguide/ddos-advanced-summary.html)
+
+---
 
 ## AWS WAF
 
-📌 **What is it?** Web application firewall that filters HTTP(S) requests using rules. Think of a website bouncer checking each request.
+**📘 AWS definition:** AWS WAF is a web application firewall that lets you monitor the HTTP(S) requests forwarded to your protected web application resources and allow, block, or count them based on rules you set.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **A bouncer at the website door** reading each request and turning away the troublemakers. **WAF = Web Application Firewall.**
 
-- Protects resources such as CloudFront, Application Load Balancer, and API Gateway.
-- Rules can block or allow IPs, patterns, bots, **SQL injection**, and cross-site scripting.
-- Pay for web ACLs, rules, and processed requests; managed rule groups may cost extra.
+**🔑 Exam keywords:** `SQL injection` · `cross-site scripting (XSS)` · `layer 7` · `block IP addresses` · `rate limiting` · `bot control` · `web ACL` · `geo-blocking`
 
-⚠️ **Exam Trap / Common Distractor:** WAF works at the web application layer; security groups filter network traffic and Shield addresses DDoS.
+**🎯 What they test**
 
-📖 **AWS docs:** [What is AWS WAF?](https://docs.aws.amazon.com/waf/latest/developerguide/waf-chapter.html)
+- Protects **CloudFront, Application Load Balancer, API Gateway**, AppSync, Cognito user pools (not EC2 directly, not NLB).
+- **Web ACLs** contain rules: IP match, geo match, **rate-based rules** (limit requests per IP), managed rule groups (OWASP top 10, bots).
+- Pay per web ACL, per rule, and per million requests.
+
+**⚠️ Exam traps**
+
+- WAF works at **layer 7 (HTTP)**. Security groups/NACLs filter **network** traffic. Shield handles **DDoS** volume.
+
+📖 **Read more:** [What is AWS WAF?](https://docs.aws.amazon.com/waf/latest/developerguide/waf-chapter.html)
+
+---
 
 ## AWS Firewall Manager
 
-📌 **What is it?** Centrally configures and manages firewall rules across all accounts and applications in AWS Organizations. Think of one security rulebook enforced everywhere.
+**📘 AWS definition:** AWS Firewall Manager simplifies your administration and maintenance tasks across multiple accounts and resources for a variety of protections, including AWS WAF, AWS Shield Advanced, and Amazon VPC security groups.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **One security rulebook pushed to every account automatically.**
 
-- **Central administration** of firewall rules (for example AWS WAF rules) across accounts.
-- New accounts and resources automatically fall under the common policies.
-- Requires AWS Organizations; pay per policy per Region.
+**🔑 Exam keywords:** `centrally manage firewall rules` · `across accounts` · `AWS Organizations` · `new accounts automatically protected`
 
-⚠️ **Exam Trap / Common Distractor:** Firewall Manager does not filter traffic itself. It deploys and enforces rules that WAF, Shield Advanced, and security groups apply.
+**🎯 What they test**
 
-📖 **AWS docs:** [AWS Firewall Manager](https://docs.aws.amazon.com/waf/latest/developerguide/fms-chapter.html)
+- Requires **AWS Organizations**; new accounts and resources automatically get the policies.
+- Manages WAF rules, Shield Advanced protections, security groups, and DNS Firewall rules.
+
+**⚠️ Exam traps**
+
+- Firewall Manager **does not filter traffic itself**; it deploys rules that WAF/Shield/security groups enforce.
+
+📖 **Read more:** [What is AWS Firewall Manager?](https://docs.aws.amazon.com/waf/latest/developerguide/fms-chapter.html)
+
+---
+
+## The detection family at a glance
+
+These five are the most confused services in the security domain. Learn **one verb** for each.
+
+| Service | Verb | Looks at | Memory hook |
+|---|---|---|---|
+| **GuardDuty** | **Detects threats** | CloudTrail, VPC Flow Logs, DNS logs, S3/EKS/RDS activity | A **guard** on **duty** watching behaviour |
+| **Inspector** | **Scans for vulnerabilities** | EC2, ECR container images, Lambda | A building **inspector** looking for weak spots (CVEs, open ports) |
+| **Macie** | **Finds sensitive data** | **S3** buckets | Finds **PII** (names, card numbers) |
+| **Detective** | **Investigates root cause** | Logs + findings from GuardDuty etc. | A **detective** solving the case after the alarm |
+| **Security Hub** | **Collects and prioritises** findings, checks best practices | Findings from all of the above + partners | The **hub** / security dashboard |
 
 ## Amazon GuardDuty
 
-📌 **What is it?** Intelligent threat-detection service that continuously analyses AWS data sources for suspicious activity. Think of a security analyst watching behaviour for danger signs.
+**📘 AWS definition:** Amazon GuardDuty is a threat detection service that continuously monitors, analyses, and processes AWS data sources and logs in your environment to identify potential security threats.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **A security guard on duty 24/7**, using machine learning and threat intelligence to spot suspicious behaviour.
 
-- Detects threats using sources such as CloudTrail events, VPC Flow Logs, and DNS logs.
-- Produces findings for compromised credentials, unusual API calls, malware-related behaviour, and other threats.
-- Usage-based pricing; a 30-day free trial is available for new accounts.
+**🔑 Exam keywords:** `threat detection` · `malicious activity` · `compromised credentials` · `cryptocurrency mining` · `unusual API calls` · `machine learning` · `continuous monitoring`
 
-⚠️ **Exam Trap / Common Distractor:** GuardDuty detects threats; it does not replace WAF, patch systems, or automatically fix every finding.
+**🎯 What they test**
 
-📖 **AWS docs:** [What is Amazon GuardDuty?](https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html)
+- Analyses **CloudTrail events, VPC Flow Logs, DNS logs** (no agents needed), plus optional S3, EKS, RDS login, Lambda, and malware protection.
+- One click to enable; 30-day free trial; findings can trigger automation through EventBridge.
+
+**⚠️ Exam traps**
+
+- GuardDuty **detects**; it does not block traffic, patch servers, or fix findings for you.
+
+📖 **Read more:** [What is Amazon GuardDuty?](https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html)
 
 ## Amazon Inspector
 
-📌 **What is it?** Automated vulnerability management for supported compute workloads. Think of a building inspector looking for known structural weaknesses.
+**📘 AWS definition:** Amazon Inspector is a vulnerability management service that automatically discovers workloads and continually scans them for software vulnerabilities and unintended network exposure.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **A building inspector** checking your servers and containers for known weak spots.
 
-- Continuously scans supported EC2 instances, ECR container images, and Lambda functions for vulnerabilities/exposure.
-- Prioritises findings using vulnerability and reachability context.
-- Usage-based charges depend on scanned resources.
+**🔑 Exam keywords:** `vulnerability scanning` · `CVEs` · `software vulnerabilities` · `network exposure` · `EC2, ECR, Lambda`
 
-⚠️ **Exam Trap / Common Distractor:** Inspector finds software vulnerabilities; GuardDuty looks for suspicious or malicious activity.
+**🎯 What they test**
 
-📖 **AWS docs:** [What is Amazon Inspector?](https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html)
+- Continuous, automatic scans of **EC2 instances, ECR container images, and Lambda functions**; risk score prioritises findings.
+
+**⚠️ Exam traps**
+
+- Inspector = **vulnerabilities in software**. GuardDuty = **suspicious activity**.
+
+📖 **Read more:** [What is Amazon Inspector?](https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html)
+
+## Amazon Macie
+
+**📘 AWS definition:** Amazon Macie is a data security service that discovers sensitive data by using machine learning and pattern matching, provides visibility into data security risks, and enables automated protection against those risks.
+
+**💡 Simple definition:** **A sniffer dog for personal data in S3.**
+
+**🔑 Exam keywords:** `sensitive data` · `PII` · `S3` · `data privacy` · `GDPR / HIPAA data discovery`
+
+**🎯 What they test**
+
+- Finds PII, financial, and health data in **S3**; also flags buckets that are public, unencrypted, or shared outside the organisation.
+
+**⚠️ Exam traps**
+
+- Macie only looks at **S3**. It does not scan databases or EC2.
+
+📖 **Read more:** [What is Amazon Macie?](https://docs.aws.amazon.com/macie/latest/user/what-is-macie.html)
 
 ## Amazon Detective
 
-📌 **What is it?** Helps you investigate and find the **root cause** of security findings or suspicious activity. Think of a detective piecing together the story behind an alert.
+**📘 AWS definition:** Amazon Detective makes it easy to analyse, investigate, and quickly identify the root cause of security findings or suspicious activities.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **The detective who arrives after the alarm** to work out what happened and how.
 
-- Automatically collects logs (VPC Flow Logs, CloudTrail, GuardDuty) and builds a linked, interactive view of resources, users, and their interactions over time.
-- Used **after** a finding appears, to investigate it.
-- Pay based on data ingested; a 30-day free trial is available for new accounts.
+**🔑 Exam keywords:** `investigate` · `root cause` · `security findings` · `visualise relationships` · `after the alert`
 
-⚠️ **Exam Trap / Common Distractor:** GuardDuty and Macie raise findings. Detective investigates them to find the cause.
+**🎯 What they test**
 
-📖 **AWS docs:** [What is Amazon Detective?](https://docs.aws.amazon.com/detective/latest/userguide/what-is-detective.html)
+- Automatically collects log data and builds linked graphs of users, resources, and activity over time to speed up investigations.
+
+**⚠️ Exam traps**
+
+- GuardDuty/Macie/Inspector **raise** findings; Detective **investigates** them.
+
+📖 **Read more:** [What is Amazon Detective?](https://docs.aws.amazon.com/detective/latest/userguide/what-is-detective.html)
 
 ## AWS Security Hub
 
-📌 **What is it?** A central place to see, prioritise, and respond to security findings and your security posture across accounts. Think of a single security dashboard.
+**📘 AWS definition:** AWS Security Hub provides a comprehensive view of your security state in AWS and helps you assess your environment against security industry standards and best practices.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **The single security dashboard** that gathers every finding in one place and scores you against best-practice checklists.
 
-- **Aggregates findings** from services such as GuardDuty, Inspector, Macie, and partner products into one view.
-- Runs automated **security best-practice checks** against standards (for example AWS Foundational Security Best Practices, CIS, PCI DSS).
-- Works across multiple accounts with AWS Organizations; supports automated responses.
+**🔑 Exam keywords:** `central view` · `aggregate findings` · `security posture` · `compliance standards (CIS, PCI DSS, AWS Foundational Security Best Practices)` · `multi-account`
 
-⚠️ **Exam Trap / Common Distractor:** Security Hub collects and prioritises findings; it does not detect threats itself (GuardDuty does). AWS renamed the original service **Security Hub CSPM** (posture checks) and made **Security Hub** a broader unified service, so you may see both names.
+**🎯 What they test**
 
-📖 **AWS docs:** [Security Hub and Security Hub CSPM](https://docs.aws.amazon.com/securityhub/latest/userguide/what-are-securityhub-services.html)
+- Aggregates findings from GuardDuty, Inspector, Macie, Firewall Manager, and partners; runs automated **best-practice checks**.
+- AWS now calls the posture-checking part **Security Hub CSPM**, and **Security Hub** a broader unified service; you may see both names.
+
+**⚠️ Exam traps**
+
+- Security Hub **collects**; it does not detect threats itself.
+
+📖 **Read more:** [Security Hub and Security Hub CSPM](https://docs.aws.amazon.com/securityhub/latest/userguide/what-are-securityhub-services.html)
+
+---
 
 ## AWS Artifact
 
-📌 **What is it?** Self-service portal for AWS compliance reports and selected agreements. Think of a document library for auditors.
+**📘 AWS definition:** AWS Artifact provides on-demand downloads of AWS security and compliance documents, such as AWS ISO certifications, Payment Card Industry (PCI), and System and Organization Control (SOC) reports.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **The document library for auditors.** If an auditor asks "prove AWS is compliant", you download it from Artifact.
 
-- Download reports such as SOC and PCI documents and review agreements such as the Business Associate Addendum (BAA).
-- Helps customers support their own compliance evidence and audits.
-- Artifact access has no charge.
+**🔑 Exam keywords:** `compliance reports` · `SOC reports` · `PCI` · `ISO certifications` · `agreements (BAA)` · `auditor`
 
-⚠️ **Exam Trap / Common Distractor:** Artifact provides documents; it does not scan resources or automatically make a workload compliant.
+**🎯 What they test**
 
-📖 **AWS docs:** [What is AWS Artifact?](https://docs.aws.amazon.com/artifact/latest/ug/what-is-aws-artifact.html)
+- **Artifact Reports:** AWS's third-party audit reports. **Artifact Agreements:** review and accept agreements such as the HIPAA **Business Associate Addendum (BAA)**.
+- Free.
+
+**⚠️ Exam traps**
+
+- Artifact gives **documents**. Checking **your** resources against rules → **AWS Config** or Security Hub. Collecting **your** audit evidence → Audit Manager.
+
+📖 **Read more:** [What is AWS Artifact?](https://docs.aws.amazon.com/artifact/latest/ug/what-is-aws-artifact.html)
 
 ## Security information and resources
 
 | Resource | What it gives you |
 |---|---|
-| **AWS Knowledge Center** | Official answers to common technical and security questions |
-| **AWS Security Center / Cloud Security page** | Overview of AWS security services, compliance, and best practices |
-| **AWS Security Blog** | News, how-tos, and announcements about AWS security |
-| **AWS Trusted Advisor** | Checks your account for security issues such as open ports or exposed resources |
-| **AWS Marketplace** | Third-party security products you can buy and deploy on AWS |
+| **AWS Knowledge Center** (on re:Post) | Official answers to common technical and security questions |
+| **AWS Security Center** (aws.amazon.com/security) | Overview of security services, compliance, and best practices |
+| **AWS Security Blog** | News and how-tos about AWS security |
+| **AWS Trusted Advisor** | Checks for security issues such as open ports, MFA on root, public S3 buckets |
+| **AWS Marketplace** | Third-party security products to buy and deploy on AWS |
 
-📖 **AWS docs:** [Knowledge Center](https://repost.aws/knowledge-center) · [AWS Cloud Security](https://aws.amazon.com/security/) · [AWS Security Blog](https://aws.amazon.com/blogs/security/) · [AWS Marketplace](https://aws.amazon.com/marketplace) · [Choosing AWS security services](https://docs.aws.amazon.com/decision-guides/latest/security-on-aws-how-to-choose/choosing-aws-security-services.html)
+📖 **Read more:** [Knowledge Center](https://repost.aws/knowledge-center) · [AWS Cloud Security](https://aws.amazon.com/security/) · [AWS Security Blog](https://aws.amazon.com/blogs/security/) · [Choosing AWS security services](https://docs.aws.amazon.com/decision-guides/latest/security-on-aws-how-to-choose/choosing-aws-security-services.html)
+
+---
 
 ## Security service chooser
 
 | Requirement | Service |
 |---|---|
-| Control AWS permissions | IAM |
-| Workforce single sign-on across accounts | IAM Identity Center |
-| Govern many AWS accounts | Organizations / SCPs |
-| Share resources across accounts | RAM |
-| Authenticate application customers | Cognito |
-| Managed Microsoft Active Directory | Directory Service |
+| Control who can do what in AWS | IAM |
+| Give an AWS service (e.g. EC2) permissions | IAM role |
+| Employees: one sign-in for many accounts/apps | IAM Identity Center |
+| Customers sign in to my web/mobile app | Cognito |
+| Microsoft Active Directory | Directory Service |
+| Govern many accounts, one bill, guardrails | Organizations + SCPs |
+| Share a resource with another account | RAM |
 | Manage encryption keys | KMS |
-| Dedicated hardware for encryption keys | CloudHSM |
-| Store and rotate passwords/API keys | Secrets Manager |
-| Manage TLS certificates | ACM |
-| DDoS protection | Shield |
-| Filter malicious HTTP requests | WAF |
-| Manage firewall rules across accounts | Firewall Manager |
-| Detect suspicious behaviour | GuardDuty |
-| Find compute vulnerabilities | Inspector |
-| Find sensitive data in S3 | Macie |
-| Investigate the root cause of a finding | Detective |
-| Central view of security findings and posture | Security Hub |
-| Download compliance reports | Artifact |
+| Dedicated, single-tenant key hardware | CloudHSM |
+| Store and **rotate** passwords/API keys | Secrets Manager |
+| HTTPS certificates | ACM |
+| DDoS protection | Shield (Standard free, Advanced paid) |
+| Block SQL injection / XSS / bad IPs at the web layer | WAF |
+| Push firewall rules to all accounts | Firewall Manager |
+| Detect suspicious activity / threats | GuardDuty |
+| Find software vulnerabilities | Inspector |
+| Find PII in S3 | Macie |
+| Investigate root cause of a finding | Detective |
+| One dashboard of all findings | Security Hub |
+| Download AWS compliance reports | Artifact |
 
+## Top traps on this page
 
-[← Storage and databases](03-storage-and-databases.md) | [Index](README.md) | [Management and analytics →](05-management-and-analytics.md)
+1. **Data** is always the **customer's** responsibility.
+2. EC2 guest OS patching = **customer**; RDS engine patching = **AWS**.
+3. Explicit **deny** always wins in IAM.
+4. EC2 needs AWS access → **IAM role**, never stored access keys.
+5. **SCPs limit** permissions; they **never grant** them.
+6. Employees → **Identity Center**; app customers → **Cognito**.
+7. KMS (keys) vs Secrets Manager (passwords + **rotation**) vs ACM (certificates).
+8. KMS (shared, managed) vs **CloudHSM** (dedicated hardware).
+9. **Shield** = DDoS; **WAF** = SQL injection/XSS.
+10. GuardDuty **detects**, Inspector **scans**, Macie **finds PII**, Detective **investigates**, Security Hub **collects**.
+11. Artifact = **AWS's** compliance reports, not a scanner.
+
+[← Storage and databases](03-storage-and-databases.md) | [Index](README.md) | [Management and governance →](05-management-and-governance.md)

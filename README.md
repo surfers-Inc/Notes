@@ -1,26 +1,31 @@
 # AWS Certified Cloud Practitioner (CLF-C02) Notes
 
-Short, exam-focused notes for the CLF-C02 exam. Each service note explains what it is, the keywords the exam uses, the common trap, and a link to the official AWS documentation for deeper reading.
+Short, exam-focused notes for the CLF-C02 exam. Each service card gives the AWS definition, a simple definition, the keywords the exam uses, what the exam actually tests, the common traps, and links to the official AWS documentation.
 
 
 ## Study order
 
-1. [Exam overview](00-exam-overview.md): exam format, domains, strategy, and a keyword-to-service lookup
-2. [Cloud concepts](01-cloud-concepts.md): cloud value, CAF, Well-Architected, economics, pricing, support plans, migration
-3. [Compute and networking](02-compute-and-networking.md): EC2, Lambda, containers, VPC, DNS, CDN, and connectivity
-4. [Storage and databases](03-storage-and-databases.md): S3, EBS, EFS, FSx, RDS, DynamoDB, and more
-5. [Security and compliance](04-security-and-compliance.md): shared responsibility, IAM, encryption, threat detection, compliance
-6. [Management and analytics](05-management-and-analytics.md): monitoring, governance, cost tools, analytics, integration, AI/ML, and other service categories
-7. [Cheat sheet and exam highlights](06-cheat-sheet-exam-highlights.md): final review, comparisons, and renamed services
+1. [Exam overview](00-exam-overview.md): format, domains, study plan, question patterns, and the **out-of-scope** list
+2. [Cloud concepts, pricing, and support](01-cloud-concepts.md): cloud benefits, global infrastructure, Well-Architected, CAF, migration, economics, support plans
+3. [Compute and networking](02-compute-and-networking.md): EC2 and its purchase options (including Reserved Instance types), Lambda, containers, VPC, DNS, CDN, connectivity
+4. [Storage and databases](03-storage-and-databases.md): S3 and its storage classes, EBS, EFS, FSx, backup and DR, RDS, Aurora, DynamoDB, and more
+5. [Security and compliance](04-security-and-compliance.md): Shared Responsibility Model, IAM, Organizations, encryption, threat detection, compliance
+6. [Management, governance, and cost tools](05-management-and-governance.md): CloudWatch, CloudTrail, Config, Trusted Advisor, CloudFormation, Systems Manager, cost tools
+7. [Analytics, integration, ML, and more](06-analytics-integration-ml-and-more.md): analytics, messaging, AI/ML, developer tools, business apps, end-user computing, IoT
+8. [Cheat sheet and exam highlights](07-cheat-sheet-exam-highlights.md): A–Z trigger words, comparisons, and final trap checklist
 
-## How to read each service note
+## How to read each service card
 
 | Marker | Meaning |
 |---|---|
-| 📌 **What is it?** | Plain-language definition with an analogy |
-| 🎯 **Need to Know for the Exam** | Keywords and facts the exam tests, including pricing basics |
-| ⚠️ **Exam Trap / Common Distractor** | The look-alike answer to avoid |
-| 📖 **AWS docs** | Official AWS page for reading beyond the exam-level summary and deeper understanding to the service |
+| 📘 **AWS definition** | How the AWS documentation describes the service (lightly condensed) |
+| 💡 **Simple definition** | Plain-language version with a memory hook or analogy |
+| 🔑 **Exam keywords** | Words in a question that point to this service |
+| 🎯 **What they test** | The specific sub-topics the exam asks about (types, classes, comparisons, pricing) |
+| ⚠️ **Exam traps** | The look-alike wrong answer and how to avoid it |
+| 📖 **Read more** | Official AWS documentation for deeper understanding |
+
+Each file also ends with a **Top traps on this page** list for quick revision.
 
 ## Official sources
 
@@ -51,5 +56,5 @@ Community material
 
 ## Important notes on changing content
 
-- AWS renames services and changes support plans, prices, and availability regularly. Older practice questions may use outdated names. See **Names you may see (old and new)** in the [cheat sheet](06-cheat-sheet-exam-highlights.md#names-you-may-see-old-and-new).
+- AWS renames services and changes support plans, prices, and availability regularly. Older practice questions may use outdated names. See **Names you may see (old and new)** in the [cheat sheet](07-cheat-sheet-exam-highlights.md#names-you-may-see-old-and-new).
 - The exam's in-scope service list is non-exhaustive and can change. Use these notes to learn each service's purpose and the differences between services, then confirm changing details on the official AWS documentation.

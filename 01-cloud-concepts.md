@@ -1,248 +1,407 @@
-# 01 — Cloud Concepts
+# 01 — Cloud Concepts, Pricing, and Support
 
 [← Exam overview](00-exam-overview.md) | [Index](README.md) | [Compute and networking →](02-compute-and-networking.md)
 
-## Cloud fundamentals
+> This file covers **Domain 1 (Cloud Concepts, 24%)** and most of **Domain 4 (Billing, Pricing, and Support, 12%)**. Service cards use the same layout as the rest of the repo: 📘 how AWS describes it · 💡 how to remember it · 🔑 keywords · 🎯 what they test · ⚠️ traps · 📖 read more.
 
-Cloud computing is on-demand access to IT resources over the internet with pay-as-you-go pricing. AWS owns and maintains the hardware; you provision and use only what you need.
+## Contents
 
-📖 **AWS docs:** [What is cloud computing?](https://aws.amazon.com/what-is-cloud-computing/)
+- **Cloud fundamentals:** [What is cloud computing?](#what-is-cloud-computing) · [Six advantages](#six-advantages-of-cloud-computing) · [Key terms](#key-terms-that-appear-in-questions) · [Deployment and service models](#deployment-models-and-service-models)
+- **Global infrastructure:** [Regions, AZs, edge locations](#aws-global-infrastructure)
+- **Frameworks:** [Well-Architected Framework](#aws-well-architected-framework) · [Well-Architected Tool](#aws-well-architected-tool) · [Cloud Adoption Framework (CAF)](#aws-cloud-adoption-framework-aws-caf)
+- **Migration:** [7 Rs](#migration-strategies-the-7-rs) · [AWS migration tools](#aws-migration-tools)
+- **Economics and pricing:** [Cloud economics](#cloud-economics) · [Pricing principles](#pricing-principles) · [Data transfer costs](#data-transfer-costs) · [Purchase options summary](#compute-purchase-options-summary) · [Free Tier](#aws-free-tier)
+- **Support and help:** [Support plans](#aws-support-plans) · [Technical resources](#technical-resources-and-where-to-get-help) · [AWS Marketplace and Partners](#aws-marketplace-and-the-aws-partner-network)
+- Shared Responsibility Model → [04](04-security-and-compliance.md#shared-responsibility-model) · Cost tools (Cost Explorer, Budgets, CUR…) → [05](05-management-and-governance.md#cost-tools-at-a-glance) · Console/CLI/SDK → [05](05-management-and-governance.md#ways-to-access-aws-console-cli-sdks)
+- [Top traps on this page](#top-traps-on-this-page)
 
-### Six cloud advantages
+---
 
-- **Trade fixed expense for variable expense:** pay for use instead of buying data centres.
-- **Economies of scale:** AWS spreads costs across many customers, so unit prices fall.
-- **Stop guessing capacity:** scale resources when demand changes.
-- **Increase speed and agility:** provision in minutes instead of weeks.
-- **Stop spending on data centres:** focus on customers, not hardware.
-- **Go global quickly:** deploy to multiple Regions rapidly.
+## What is cloud computing?
 
-📖 **AWS docs:** [Six advantages of cloud computing](https://docs.aws.amazon.com/whitepapers/latest/aws-overview/six-advantages-of-cloud-computing.html)
+**📘 AWS definition:** Cloud computing is the on-demand delivery of IT resources over the internet with pay-as-you-go pricing.
 
-### Key terms
+**💡 Simple definition:** **Renting IT instead of buying it**, like using electricity from the grid rather than building your own power station. You switch it on when needed and pay for what you use.
 
-| Term | Meaning |
-|---|---|
-| High availability | Keep working when a component fails, commonly across multiple AZs |
-| Elasticity | Automatically add or remove resources with demand |
-| Scalability | Increase or decrease capacity to meet demand |
-| Agility | Experiment and deliver quickly |
-| Fault tolerance | Continue operating despite failures |
-| Disaster recovery | Restore service after a major event |
+📖 **Read more:** [What is cloud computing?](https://aws.amazon.com/what-is-cloud-computing/) · [Overview of Amazon Web Services (whitepaper)](https://docs.aws.amazon.com/whitepapers/latest/aws-overview/introduction.html)
 
-### Deployment models
+## Six advantages of cloud computing
 
-- **Cloud:** resources run in AWS.
-- **On-premises:** resources run in the organisation's own data centre.
-- **Hybrid:** connected mix of cloud and on-premises resources.
+Expect at least one question that describes a benefit and asks you to name it.
 
-### Ways to access AWS
+| Advantage | Plain meaning | Question clue |
+|---|---|---|
+| **Trade fixed expense for variable expense** | Pay only for what you use instead of buying servers up front (**CapEx → OpEx**) | "no upfront investment", "pay as you go" |
+| **Benefit from massive economies of scale** | AWS buys at huge scale, so prices are lower | "lower variable cost than you could get yourself" |
+| **Stop guessing capacity** | Scale up or down with real demand | "avoid over- or under-provisioning" |
+| **Increase speed and agility** | New resources in minutes, so you can experiment | "reduce time to provision from weeks to minutes" |
+| **Stop spending money running and maintaining data centres** | Focus on customers, not racking servers | "focus on business differentiators" |
+| **Go global in minutes** | Deploy in Regions worldwide with a few clicks | "low latency for customers around the world" |
 
-| Method | Use it for |
-|---|---|
-| **Management Console** | Point-and-click, learning, one-time tasks |
-| **AWS CLI** | Commands and scripts from a terminal |
-| **SDKs / APIs** | Calling AWS from application code (programmatic access) |
+Memory hook: **"Variable Scale, No Guessing, Fast, No Data centre, Global."**
 
+📖 **Read more:** [Six advantages of cloud computing](https://docs.aws.amazon.com/whitepapers/latest/aws-overview/six-advantages-of-cloud-computing.html)
 
+## Key terms that appear in questions
 
-📖 **AWS docs:** [Tools to build on AWS](https://aws.amazon.com/tools/) · [AWS CLI User Guide](https://docs.aws.amazon.com/cli/latest/userguide/)
+| Term | Meaning | Example |
+|---|---|---|
+| **High availability** | The system keeps running with minimal downtime | Run across **multiple AZs** behind a load balancer |
+| **Fault tolerance** | Keeps working **even while** a component fails, with no visible interruption | Aurora's six copies of data across three AZs |
+| **Elasticity** | Resources grow and shrink **automatically** with demand | Auto Scaling adds instances at peak and removes them at night |
+| **Scalability** | The ability to handle more load by adding resources (up or out) | Move to a bigger instance (vertical) or add more instances (horizontal) |
+| **Agility** | Speed of trying, building, and delivering new things | Spin up a test environment in minutes |
+| **Disaster recovery (DR)** | Restoring service after a major event | Backups or standby resources in another Region |
+| **Durability** | Data will not be lost | S3 is designed for 11 nines of durability |
+| **Decoupling / loose coupling** | Components do not depend directly on each other | SQS queue between web and worker tiers |
 
-### Global infrastructure
+⚠️ **Trap:** **Elasticity** = automatic, short-term matching of demand. **Scalability** = ability to grow. Pick elasticity when the question says "automatically" or "only pay for what is needed at that moment".
 
-- **Region:** separate geographic area containing multiple Availability Zones.
-- **Availability Zone (AZ):** one or more isolated data centres in a Region. AZs do not share single points of failure.
-- **Edge location:** site that caches or routes content closer to users.
-- Use **multiple AZs** for high availability.
-- Use **multiple Regions** for disaster recovery, business continuity, low latency for users, or **data sovereignty** (data must stay in a country).
-- Most services are **regional**; IAM, Route 53, and CloudFront are important global services.
+## Deployment models and service models
 
-📖 **AWS docs:** [AWS Global Infrastructure](https://aws.amazon.com/about-aws/global-infrastructure/)
+| Deployment model | Where it runs | Clue |
+|---|---|---|
+| **Cloud (cloud-native)** | Fully in AWS | "built entirely in the cloud" |
+| **On-premises (private cloud)** | Your own data centre | "keep everything in our own building" |
+| **Hybrid** | Cloud + on-premises connected | "connect our data centre to AWS", Outposts, Direct Connect, Storage Gateway |
 
-## AWS Cloud Adoption Framework (AWS CAF)
+| Service model | You manage | AWS example |
+|---|---|---|
+| **IaaS** (Infrastructure as a Service) | OS, apps, data | **EC2**, VPC, EBS |
+| **PaaS** (Platform as a Service) | Apps and data | **Elastic Beanstalk**, RDS |
+| **SaaS** (Software as a Service) | Just use it | Amazon WorkSpaces, Amazon Connect, software from AWS Marketplace |
 
-AWS CAF helps organisations plan cloud transformation through six perspectives. The goal is better business outcomes: **reduced business risk, improved ESG (environmental, social, governance) performance, increased revenue, and improved operational efficiency**.
+📖 **Read more:** [Types of cloud computing](https://docs.aws.amazon.com/whitepapers/latest/aws-overview/types-of-cloud-computing.html)
 
-| Business-focused | Technology-focused |
-|---|---|
-| **Business:** business outcomes and value | **Platform:** architecture and cloud foundations |
-| **People:** skills, culture, and roles | **Security:** confidentiality, integrity, compliance |
-| **Governance:** benefits, risk, and control | **Operations:** operate and recover workloads |
+---
 
-⚠️ **Exam trap:** CAF plans organisational transformation. The Well-Architected Framework evaluates cloud workloads.
+## AWS global infrastructure
 
-📖 **AWS docs:** [AWS CAF](https://aws.amazon.com/cloud-adoption-framework/) · [CAF Business perspective](https://docs.aws.amazon.com/whitepapers/latest/aws-caf-business-perspective/aws-caf-business-perspective.html)
+**📘 AWS definition:** The AWS Cloud infrastructure is built around AWS Regions and Availability Zones; a Region is a physical location in the world with multiple Availability Zones, and each Availability Zone consists of one or more discrete data centres with redundant power, networking, and connectivity.
+
+**💡 Simple definition:** **Region = a city. Availability Zone = separate buildings in that city. Edge location = small shops in many towns** that keep popular items close to customers.
+
+**🔑 Exam keywords:** `Region` · `Availability Zone (AZ)` · `edge location` · `Local Zone` · `data sovereignty / residency` · `multi-AZ` · `multi-Region`
+
+**🎯 What they test**
+
+| Piece | What it is | Use it for |
+|---|---|---|
+| **Region** | A geographic area (for example `eu-west-1`, Ireland), fully isolated from other Regions; usually **three or more AZs** | Data residency, latency to users, DR in another Region |
+| **Availability Zone (AZ)** | One or more data centres with separate power, cooling, and networking, physically apart but linked by low-latency fibre | **High availability**: run in **at least two AZs** |
+| **Edge location / point of presence** | Hundreds of sites in many more cities than Regions; used by **CloudFront, Route 53, Global Accelerator, Shield, WAF** | Low-latency content delivery and DNS |
+| **Regional edge cache** | Larger caches between edge locations and the origin | CloudFront content that is less popular |
+| **Local Zone** | An extension of a Region placed close to a big city | Single-digit-millisecond latency to users in that city |
+| **Outposts** | AWS racks in **your** data centre | Hybrid; see [02](02-compute-and-networking.md#aws-outposts) |
+
+**How to choose a Region (four factors):**
+
+1. **Compliance / data sovereignty:** laws may require data to stay in a country. (Usually the deciding factor.)
+2. **Proximity / latency:** close to your customers.
+3. **Service availability:** not every service or feature is in every Region.
+4. **Pricing:** prices differ between Regions.
+
+**Scope of services:** most services are **regional** (EC2, RDS, VPC…). Key **global** services: **IAM, Route 53, CloudFront, Organizations**, WAF when used with CloudFront. **S3** has globally unique bucket names but each bucket lives in one Region. **EBS** volumes and **subnets** are **AZ-scoped**.
+
+**⚠️ Exam traps**
+
+- **High availability** → multiple **AZs**. **Disaster recovery from a regional outage** or **data sovereignty** → multiple / specific **Regions**.
+- Data never leaves a Region unless **you** move or replicate it.
+- Edge locations are **not** where you run EC2 instances.
+
+📖 **Read more:** [Regions and Availability Zones](https://aws.amazon.com/about-aws/global-infrastructure/regions_az/) · [Global infrastructure overview (whitepaper)](https://docs.aws.amazon.com/whitepapers/latest/aws-overview/global-infrastructure.html) · [What is a Local Zone?](https://docs.aws.amazon.com/local-zones/latest/ug/what-is-aws-local-zones.html)
+
+---
 
 ## AWS Well-Architected Framework
 
-Six pillars guide secure, reliable, efficient, cost-effective, and sustainable workloads.
+**📘 AWS definition:** The AWS Well-Architected Framework helps you understand the pros and cons of decisions you make while building systems on AWS, describing key concepts, design principles, and architectural best practices for designing and running workloads in the cloud.
 
-| Pillar | Main question |
-|---|---|
-| Operational Excellence | Can we run, monitor, and improve the workload? |
-| Security | Can we protect data, systems, and assets? |
-| Reliability | Can the workload recover and meet demand? |
-| Performance Efficiency | Are resources used efficiently? |
-| Cost Optimization | Are we avoiding unnecessary cost? |
-| Sustainability | Are we reducing environmental impact? |
+**💡 Simple definition:** **A health checklist for a cloud workload**, organised into six pillars.
 
-📖 **AWS docs:** [Well-Architected Framework: definitions and pillars](https://docs.aws.amazon.com/wellarchitected/latest/framework/definitions.html)
+**🧮 Formula: Well-Architected = CROPSS**
+
+> Picture a farmer checking six **crops** before harvest: a workload is only "well-architected" when all six are healthy.
+
+| Letter | Pillar | One-line meaning | Think of it as… |
+|---|---|---|---|
+| **C** | **Cost Optimisation** | Deliver value at the lowest price; no waste | "Am I paying for anything I don't use?" |
+| **R** | **Reliability** | Recover from failure and meet demand | "Does it keep working when something breaks?" |
+| **O** | **Operational Excellence** | Run, monitor, and keep improving operations | "Can we run and improve it day to day?" |
+| **P** | **Performance Efficiency** | Use the right resources efficiently as needs change | "Is it fast and right-sized?" |
+| **S** | **Security** | Protect data, systems, and assets | "Is it locked down?" |
+| **S** | **Sustainability** | Reduce environmental impact | "Is it kind to the planet?" |
+
+Trick to remember the two S's: **S**ecurity protects the **system**, **S**ustainability protects the **surroundings** (the environment). Sustainability is the newest pillar (added in 2021), so it comes last.
+
+**🔑 Exam keywords:** `six pillars` · `best practices` · `design principles` · `workload review` · `high-risk issues`
+
+**🎯 What they test: match the scenario to the pillar**
+
+| Pillar | Main question | Design principles / clues to match |
+|---|---|---|
+| **Operational Excellence** | Can we run, monitor, and improve the workload? | **Perform operations as code** (IaC), make **small, frequent, reversible changes**, refine procedures, **anticipate failure**, learn from operational events |
+| **Security** | Can we protect data, systems, and assets? | Strong identity foundation (**least privilege**), **traceability** (logs), security at **all layers**, **automate** security, protect data **in transit and at rest**, prepare for incidents |
+| **Reliability** | Can it recover from failure and meet demand? | **Automatically recover** from failure, **test recovery** procedures, **scale horizontally**, **stop guessing capacity**, manage change through automation |
+| **Performance Efficiency** | Are we using the right resources efficiently as demand changes? | **Democratise advanced technologies** (use managed services), **go global in minutes**, use **serverless**, **experiment more often**, consider mechanical sympathy |
+| **Cost Optimisation** | Are we avoiding unnecessary cost? | **Adopt a consumption model**, measure efficiency, **stop spending on undifferentiated heavy lifting**, analyse and attribute expenditure (tags) |
+| **Sustainability** | Are we reducing environmental impact? | Understand your impact, maximise **utilisation**, use **managed services**, adopt more efficient hardware/software, reduce downstream impact |
+
+**⚠️ Exam traps**
+
+- "Multi-AZ, automatic failover, backups" → **Reliability**, not Performance.
+- "Choose the right instance type, use serverless/CDN for speed" → **Performance Efficiency**.
+- "Turn off idle resources, rightsizing, Savings Plans" → **Cost Optimisation**.
+- "Maximise utilisation to reduce energy" → **Sustainability**.
+- "Infrastructure as code, runbooks, small changes" → **Operational Excellence**.
+
+📖 **Read more:** [Well-Architected Framework: the pillars](https://docs.aws.amazon.com/wellarchitected/latest/framework/pillars.html) · [Definitions](https://docs.aws.amazon.com/wellarchitected/latest/framework/definitions.html) · [Well-Architected home](https://aws.amazon.com/architecture/well-architected/)
 
 ### AWS Well-Architected Tool
 
-📌 **What is it?** A free self-service tool for reviewing workloads against AWS Well-Architected best practices. Think of it as an architecture health checklist.
+**📘 AWS definition:** The AWS Well-Architected Tool is a service in the cloud that provides a consistent process for measuring your architecture using AWS best practices.
 
-🎯 **Need to Know for the Exam (Key Keywords)**
+**💡 Simple definition:** **The Well-Architected checklist as a free questionnaire in the console.** Answer questions about one workload; get a list of risks and fixes.
 
-- Uses structured questions to identify **high-risk issues (HRIs)** and medium-risk issues, with improvement actions.
-- Supports the six pillars and can record milestones.
-- The tool is free; recommended improvements may create service charges.
+**🔑 Exam keywords:** `review a workload` · `high-risk issues (HRIs)` · `six pillars` · `milestones` · `improvement plan`
 
-⚠️ **Exam Trap / Common Distractor:** It provides guidance; it does not automatically redesign or repair a workload.
+**🎯 What they test**
 
-📖 **AWS docs:** [Well-Architected Tool User Guide](https://docs.aws.amazon.com/wellarchitected/latest/userguide/well-architected.html)
+- Free self-service tool; identifies **high and medium-risk issues** per pillar, tracks **milestones** over time, and offers lenses (for example Serverless, SaaS).
 
-## Identity and Access Management (IAM) foundations
+**⚠️ Exam traps**
 
-Use least privilege, enable MFA, avoid daily root-user use, and prefer temporary credentials. See [Security and compliance](04-security-and-compliance.md#aws-identity-and-access-management-iam) for the full IAM service template.
+- Well-Architected Tool = review **one workload** by answering questions. **Trusted Advisor** = automatic checks of your **whole account**.
+- It gives guidance; it does not fix anything for you.
 
-| Identity item | Purpose |
-|---|---|
-| User | Long-term identity for one person or application |
-| Group | Collection of users; permissions apply to its members |
-| Role | Assumable identity with temporary credentials |
-| Policy | JSON permission document stating allow or deny |
+📖 **Read more:** [What is the AWS Well-Architected Tool?](https://docs.aws.amazon.com/wellarchitected/latest/userguide/intro.html)
 
-📖 **AWS docs:** [IAM security best practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)
+---
 
-## Shared Responsibility Model
+## AWS Cloud Adoption Framework (AWS CAF)
 
-- AWS is responsible for security **of** the cloud: facilities, hardware, networking, and managed infrastructure.
-- The customer is responsible for security **in** the cloud: identities, data, configuration, and, for EC2, the guest OS and applications.
-- Customer work decreases with more managed services: EC2 → RDS → Lambda.
+**📘 AWS definition:** The AWS Cloud Adoption Framework (AWS CAF) leverages AWS experience and best practices to help you digitally transform and accelerate your business outcomes through innovative use of AWS.
 
-📖 **AWS docs:** [Shared Responsibility Model](https://aws.amazon.com/compliance/shared-responsibility-model/)
+**💡 Simple definition:** **A roadmap for the organisation (people, process, technology) moving to the cloud.** Well-Architected judges a **workload**; CAF guides the **company**.
+
+**🔑 Exam keywords:** `cloud transformation` · `six perspectives` · `business outcomes` · `organisational readiness` · `foundational capabilities`
+
+**🎯 What they test**
+
+**🧮 Formula: CAF = GBP + OPS**
+
+> **GBP** is the British pound, money, so it's the **business side**. **OPS** is short for operations, so it's the **technical side**. The cloud journey needs both the money people and the ops people.
+
+| Formula part | Letter | Perspective | One-line meaning |
+|---|---|---|---|
+| **GBP** (business side) | **G** | **Governance** | Manage risk, budgets, and the cloud programme |
+| | **B** | **Business** | Make sure cloud spending delivers business value |
+| | **P** | **People** | Skills, culture, training, and change (the **bridge** between business and tech) |
+| **OPS** (technical side) | **O** | **Operations** | Run cloud services reliably day to day |
+| | **P** | **Platform** | Build the cloud platform and architecture |
+| | **S** | **Security** | Protect data and workloads |
+
+Do not mix up the two **P**s: **P**eople sits with the business (GBP), **P**latform sits with the technology (OPS).
+
+**Six perspectives in detail** (who owns each one):
+
+| Business-focused | Who owns it | Technical-focused | Who owns it |
+|---|---|---|---|
+| **Business**: cloud investments drive business outcomes | CEO, CFO, CIO, strategy | **Platform**: build an enterprise-grade, scalable cloud platform | CTO, architects, engineers |
+| **People**: culture, skills, roles, change management (the **bridge** between business and technology) | HR, staffing, people managers | **Security**: confidentiality, integrity, availability of data and workloads | CISO, security engineers |
+| **Governance**: maximise benefits, minimise risk; programme and portfolio management, **financial management** | CFO, chief risk officer, programme managers | **Operations**: deliver cloud services to agreed business levels; monitoring, incident management | IT operations, site reliability |
+
+**Benefits (business outcomes) CAF lists:** **reduced business risk**, **improved ESG performance** (environmental, social, governance), **increased revenue**, and **increased operational efficiency**.
+
+**Transformation journey phases:** **Envision → Align → Launch → Scale**.
+**Transformation domains:** Technology → Process → Organisation → Product.
+
+**⚠️ Exam traps**
+
+- "Staff training, skills gaps, organisational change" → **People** perspective.
+- "Align IT and business, measure cloud spend, manage risk" → **Governance**.
+- CAF plans an **organisation's adoption**; Well-Architected reviews a **workload's design**.
+
+📖 **Read more:** [AWS CAF overview (whitepaper)](https://docs.aws.amazon.com/whitepapers/latest/overview-aws-cloud-adoption-framework/welcome.html) · [AWS CAF home](https://aws.amazon.com/cloud-adoption-framework/)
+
+---
+
+## Migration strategies: the 7 Rs
+
+| Strategy | Plain meaning | Clue |
+|---|---|---|
+| **Retire** | Turn it off; no longer needed | "decommission unused applications" |
+| **Retain** | Keep it where it is for now (revisit later) | "not ready to migrate", "recent upgrade" |
+| **Rehost** | **Lift and shift**, no changes | "move quickly without changes", Application Migration Service |
+| **Relocate** | Move a whole platform without changing it (for example VMware Cloud on AWS) | "move VMs at hypervisor level" |
+| **Repurchase** | **Drop and shop**: switch to a different product, often SaaS | "replace CRM with a SaaS product" |
+| **Replatform** | **Lift, tinker, and shift**: small optimisations | "move the database to RDS without changing the app" |
+| **Refactor / re-architect** | Redesign to be cloud-native | "rebuild as microservices/serverless for agility" |
+
+Memory hook: **"Two stay (Retire, Retain), three move as-is-ish (Rehost, Relocate, Replatform), one replaces (Repurchase), one rebuilds (Refactor)."**
+
+**Benefits of migrating** the exam likes: lower TCO, agility, elasticity, reduced operational overhead, better security and resilience, global reach, faster innovation.
+
+📖 **Read more:** [Migration strategies (7 Rs)](https://docs.aws.amazon.com/prescriptive-guidance/latest/large-migration-guide/migration-strategies.html)
+
+## AWS migration tools
+
+| Service | 💡 Simple definition | 🔑 Keyword | ⚠️ Trap |
+|---|---|---|---|
+| **AWS Application Discovery Service** | Collects data about on-premises servers, usage, and **dependencies** to plan a migration | "discover", "inventory", "dependencies" | AWS says it is no longer open to new customers (it points to **AWS Transform**), but it is still on the in-scope list |
+| **Migration Evaluator** | Builds a **business case** and cost projection for moving to AWS | "business case", "TCO estimate" | Estimates value; does not move anything |
+| **AWS Migration Hub** | One dashboard to **track** migration progress across tools | "track", "single place" | Tracks; others do the moving |
+| **AWS Application Migration Service (MGN)** | Automated **lift-and-shift (rehost)** of servers with continuous replication | "rehost", "minimal downtime", "lift and shift" | Renamed **AWS Transform MGN** in June 2026; the exam may use the old name. Not for DR (that is Elastic Disaster Recovery) |
+| **AWS DMS** and **AWS SCT** | Move databases / convert schemas | "migrate database" | See [03](03-storage-and-databases.md#aws-database-migration-service-aws-dms) |
+
+Order to remember: **Discover → Evaluate (business case) → Migrate (MGN/DMS) → Track (Migration Hub)**.
+
+📖 **Read more:** [What is Application Discovery Service?](https://docs.aws.amazon.com/application-discovery/latest/userguide/what-is-appdiscovery.html) · [Migration Evaluator](https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-tools/discovery-migration-evaluator.html) · [What is AWS Migration Hub?](https://docs.aws.amazon.com/migrationhub/latest/ug/whatishub.html) · [What is AWS Application Migration Service?](https://docs.aws.amazon.com/mgn/latest/ug/what-is-application-migration-service.html) · [MGN rename announcement](https://aws.amazon.com/about-aws/whats-new/2026/06/aws-transform-mgn-rebrand/)
+
+---
 
 ## Cloud economics
 
 | Idea | What to remember |
 |---|---|
-| **Fixed vs variable cost** | Fixed (capital) cost means buying hardware up front. Variable cost means paying only for what you use. The cloud moves you to variable cost. |
-| **On-premises costs** | Servers, storage, networking, power, cooling, floor space, and staff. You also over-buy to cover peak demand. |
-| **Licensing** | **License Included:** AWS provides the licence in the price. **BYOL (Bring Your Own License):** you use licences you already own, subject to the vendor's terms (for example Microsoft products on Dedicated Hosts). |
-| **Rightsizing** | Match instance type and size to the real workload so you are not paying for unused capacity. Do it continuously. |
-| **Automation** | Scheduled start/stop, Auto Scaling, and IaC reduce manual errors and idle cost and make results repeatable. |
-| **Economies of scale** | Aggregated usage from many customers lowers AWS's cost per unit, and savings are passed on. |
+| **CapEx vs OpEx** | **Capital expense** = buy hardware up front (on-premises). **Operational expense** = pay as you use (cloud). |
+| **Total cost of ownership (TCO)** | On-premises costs include servers, storage, network, **power, cooling, floor space, staff, licences**, and over-buying for peak demand. Cloud removes most of these. |
+| **Licensing** | **License Included**: the licence is in the AWS price. **BYOL (Bring Your Own License)**: reuse licences you own, subject to vendor terms (often with **Dedicated Hosts**; track with **License Manager**). |
+| **Rightsizing** | Match the resource size to real usage; do it continuously (**Compute Optimizer**). |
+| **Automation** | Scheduled start/stop, Auto Scaling, and infrastructure as code reduce idle cost and human error. |
+| **Managed services** | Shift undifferentiated work (patching, backups) to AWS, reducing staff cost. |
 
-📖 **AWS docs:** [Licensing options on AWS](https://aws.amazon.com/windows/resources/licensing/) · [Right sizing](https://aws.amazon.com/aws-cost-management/aws-cost-optimization/right-sizing/) · [Six advantages](https://docs.aws.amazon.com/whitepapers/latest/aws-overview/six-advantages-of-cloud-computing.html)
+📖 **Read more:** [Licensing options on AWS](https://aws.amazon.com/windows/resources/licensing/) · [Right sizing](https://aws.amazon.com/aws-cost-management/aws-cost-optimization/right-sizing/)
 
-## Pricing and billing foundations
+## Pricing principles
 
-### Pricing principles
+1. **Pay as you go:** no long-term contracts for most services.
+2. **Save when you commit:** Savings Plans and Reserved Instances.
+3. **Pay less by using more:** tiered pricing (for example S3 per-GB price drops at higher volumes) and volume discounts across accounts with consolidated billing.
 
-- **Pay as you go:** no long-term commitment for many services.
-- **Save when you commit:** Savings Plans and Reserved Instances can reduce eligible compute cost.
-- **Pay less at scale:** tiered pricing and volume discounts may apply.
-- Pricing varies by service, Region, usage, and purchase option.
+**Usually free:** IAM, VPC itself, Organizations and consolidated billing, CloudFormation, Elastic Beanstalk, Auto Scaling (pay for the resources they create), Shield Standard, Cost Explorer UI, Well-Architected Tool, Trusted Advisor core checks.
 
-📖 **AWS docs:** [AWS Pricing](https://aws.amazon.com/pricing/) · [AWS Free Tier](https://aws.amazon.com/free/)
+📖 **Read more:** [How AWS pricing works](https://docs.aws.amazon.com/whitepapers/latest/how-aws-pricing-works/welcome.html) · [AWS Pricing](https://aws.amazon.com/pricing/)
 
-### Data transfer costs
+## Data transfer costs
 
-- **Inbound** data transfer from the internet is usually free.
-- **Outbound** to the internet, **between Regions**, and often **between AZs** costs money.
-- Traffic within one AZ over private IPs, and between some services in the same Region (for example EC2 to S3), is commonly free. Always check the service's pricing page.
+- **Inbound** data from the internet: **free** (in most cases).
+- **Outbound** to the internet: **charged** (tiered).
+- **Between Regions**: charged. **Between AZs** in the same Region: usually charged.
+- Within the same AZ using private IPs, and many same-Region service-to-service transfers (for example EC2 to S3): commonly free.
+- **CloudFront** can reduce outbound costs and origin load; **Direct Connect** can lower transfer cost for large, steady volumes.
 
-📖 **AWS docs:** [Understanding data transfer charges](https://docs.aws.amazon.com/cur/latest/userguide/cur-data-transfers-charges.html)
+📖 **Read more:** [Understanding data transfer charges](https://docs.aws.amazon.com/cur/latest/userguide/cur-data-transfers-charges.html)
 
-### EC2 purchasing models at a glance
+## Compute purchase options summary
 
-| Model | Best for | Commitment / interruption |
-|---|---|---|
-| On-Demand | Short, unpredictable workloads | None; not interrupted by AWS |
-| Savings Plans | Steady compute usage | 1 or 3 years; flexible discount model |
-| Reserved Instances | Predictable EC2 use and capacity options | 1 or 3 years |
-| Spot Instances | Flexible, fault-tolerant batch work | Can be interrupted by AWS |
-| Dedicated Instances | Instances on hardware used by only one customer | Pay by the hour; no view of the physical server |
-| Dedicated Hosts | Licensing or compliance requiring a physical server | Dedicated physical host; highest control/cost |
+Full detail with traps is in [02 → EC2 purchase options](02-compute-and-networking.md#ec2-purchase-options). The short version:
 
+| Option | One-line rule |
+|---|---|
+| **On-Demand** | Flexible, no commitment, can't be interrupted |
+| **Savings Plans** | Commit to $/hour for 1–3 years; flexible across instance families, Regions, **Fargate, and Lambda** (Compute SP) |
+| **Reserved Instances** | Commit to an instance configuration for 1–3 years; **Standard** (biggest discount) or **Convertible** (can change type) |
+| **Spot** | Up to 90% off; **can be interrupted** with 2 minutes' notice |
+| **Dedicated Host / Instance** | Physical isolation; **Host** for socket/core licensing (BYOL) |
 
-**Flexibility to remember**
+In **AWS Organizations**, RI and Savings Plans discounts are **shared** across accounts by default (the management account can turn sharing off).
 
-- **Savings Plans:** Compute Savings Plans cover EC2, Fargate, and Lambda (up to 66% off On-Demand). EC2 Instance Savings Plans are tied to an instance family but save more (up to 72%).
-- **Reserved Instances:** **Standard** gives the biggest discount (up to 72%); **Convertible** lets you exchange for other attributes (up to 66%). **Regional** RIs apply across AZs and give instance size flexibility; **zonal** RIs reserve capacity in one AZ.
-- **In AWS Organizations:** RI and Savings Plans discounts are shared across accounts under consolidated billing by default. The management account can turn sharing off for individual accounts. Zonal RI capacity reservations are not shared.
+📖 **Read more:** [Savings Plans vs Reserved Instances](https://docs.aws.amazon.com/savingsplans/latest/userguide/sp-ris.html) · [RI and Savings Plans discount sharing](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/ri-turn-off.html)
 
-📖 **AWS docs:** [EC2 purchasing options](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-purchasing-options.html) · [Savings Plans vs RIs](https://docs.aws.amazon.com/savingsplans/latest/userguide/sp-ris.html) · [RI and Savings Plans discount sharing](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/ri-turn-off.html)
+## AWS Free Tier
 
-### Cost tools
+- New customers get free usage of many services to try AWS (for example credits or limited monthly usage), plus some **always-free** offers (for example Lambda's 1 million requests per month).
+- The structure of the Free Tier changes over time; check the current page before the exam rather than memorising amounts.
+- Use **AWS Budgets** alerts to avoid surprise bills when the free allowance runs out.
 
-- **AWS Pricing Calculator:** estimate cost before deploying.
-- **AWS Cost Explorer:** analyse and forecast existing cost and usage.
-- **AWS Budgets:** alert when actual or forecast cost/usage crosses thresholds.
-- **Cost and Usage Report (CUR):** most detailed billing data for analysis.
-- **Consolidated billing (AWS Organizations):** one bill for all member accounts, combined volume discounts, shared RI/Savings Plans discounts.
-- **Cost allocation tags:** group costs by project, team, or environment after activation. There are two types: **AWS-generated** tags (prefix `aws:`) and **user-defined** tags (prefix `user:`). Both must be **activated** in the Billing console, and can take up to 24 hours to appear. They show up in Cost Explorer and the CUR.
+📖 **Read more:** [AWS Free Tier](https://aws.amazon.com/free/)
 
-📖 **AWS docs:** [Pricing Calculator](https://calculator.aws/) · [Cost Explorer](https://docs.aws.amazon.com/cost-management/latest/userguide/ce-getting-started.html) · [Budgets](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html) · [Cost and Usage Reports](https://docs.aws.amazon.com/cur/latest/userguide/what-is-cur.html) · [Consolidated billing](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/consolidated-billing.html) · [Cost allocation tags](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html)
+---
 
-### Support plans
+## AWS Support plans
 
-AWS now offers four plans; each paid plan builds on the one below it. Older plans (Developer, Business, Enterprise On-Ramp) may still appear in older study material.
+**📘 AWS definition:** AWS Support offers a range of plans that provide access to tools and expertise that support the success and operational health of your AWS solutions.
+
+**💡 Simple definition:** **Levels of help, from self-service to a dedicated team watching your systems.** The more critical your workload, the higher the plan.
+
+**🔑 Exam keywords:** `Basic` · `Business Support+` · `Enterprise Support` · `Unified Operations` · `Technical Account Manager (TAM)` · `response time` · `production workload` · `mission-critical`
+
+**🎯 What they test**
+
+AWS now offers **four** plans; each paid plan includes everything in the one before it.
 
 | Plan | For | Key features |
 |---|---|---|
-| **Basic** | All AWS customers (free) | 24/7 customer service, documentation, whitepapers, AWS re:Post, core Trusted Advisor checks, AWS Health |
-| **Business Support+** | Minimum AWS recommends for **production** workloads | 24/7 technical support by phone, web, chat, and email; AI-powered troubleshooting; full Trusted Advisor checks; unlimited cases and contacts; third-party software support; critical-system-down response under 30 minutes |
-| **Enterprise Support** | **Business-critical** workloads | Everything in Business Support+, plus a designated **Technical Account Manager (TAM)**, Well-Architected and security reviews, Trusted Advisor Priority, critical-system-down response under 15 minutes |
-| **Unified Operations** | **Mission-critical** workloads | Everything in Enterprise Support, plus designated domain specialist engineers, Incident Management Engineers, 24/7 workload monitoring, response under 5 minutes |
+| **Basic** (free, all customers) | Getting started | 24/7 **customer service** (billing and account), documentation, whitepapers, **AWS re:Post**, **core Trusted Advisor** checks, **AWS Health Dashboard**. **No technical support cases** |
+| **Business Support+** | **Production** workloads (AWS's recommended minimum) | 24/7 technical support by phone, web, chat, and email; AI-powered troubleshooting; **full Trusted Advisor** checks; **AWS Health API**; unlimited cases and contacts; third-party software support; critical-system-down response **under 30 minutes** |
+| **Enterprise Support** | **Business-critical** workloads | Everything above, plus a designated **Technical Account Manager (TAM)**, Well-Architected and security reviews, Trusted Advisor Priority, critical-system-down response **under 15 minutes** |
+| **Unified Operations** | **Mission-critical** workloads | Everything above, plus designated domain specialist engineers, Incident Management Engineers, 24/7 workload monitoring, response **under 5 minutes** |
 
-⚠️ **Exam trap:** Response times and features differ by plan; learn the order **Basic → Business Support+ → Enterprise Support → Unified Operations**. The TAM starts at Enterprise level.
+Memory hook: **"B, B+, E, U"** → **B**asic, **B**usiness **+**, **E**nterprise, **U**nified, getting faster: **none → 30 min → 15 min → 5 min**.
 
-📖 **AWS docs:** [Compare AWS Support plans](https://aws.amazon.com/premiumsupport/plans/) · [AWS Support plans guide](https://docs.aws.amazon.com/awssupport/latest/user/aws-support-plans.html) · [Announcement of the new plans](https://aws.amazon.com/about-aws/whats-new/2025/12/aws-support-transformation-ai-powered-operations)
+**⚠️ Exam traps**
 
-### Technical resources and help
+- **Basic** includes **no** technical support cases; account and billing questions only.
+- The **TAM** starts at **Enterprise Support**.
+- Older materials and practice tests list **Developer, Business, and Enterprise On-Ramp** plans. Recognise those names, but learn the four current plans above for the exam.
+- The **full** set of Trusted Advisor checks and the **Health API** need **Business Support+ or higher**.
 
-| Resource | What it is for |
-|---|---|
-| **Documentation and whitepapers** | Official guides and deep dives |
-| **AWS re:Post** | Community questions and answers |
-| **AWS Knowledge Center** | Official answers to common technical questions |
-| **AWS Prescriptive Guidance** | Proven strategies, guides, and patterns for migration and modernisation |
-| **AWS Support Center** | Create and manage support cases where your plan allows |
-| **AWS Health Dashboard / Health API** | Events that affect your AWS resources and services |
-| **AWS Trust and Safety** | Report abuse of AWS resources (spam, malware, DDoS, and similar) |
-| **AWS Professional Services / solutions architects** | AWS experts who help with projects and architecture |
-| **AWS Partner Network (APN)** | Partners such as ISVs (software vendors) and system integrators. Partners get training and certification, events, and discounts |
-| **AWS Marketplace** | Catalogue of third-party software you can buy and deploy; supports cost management, governance, and entitlement |
+📖 **Read more:** [Compare AWS Support plans](https://aws.amazon.com/premiumsupport/plans/) · [AWS Support plans guide](https://docs.aws.amazon.com/awssupport/latest/user/aws-support-plans.html) · [Announcement of the new plans](https://aws.amazon.com/about-aws/whats-new/2025/12/aws-support-transformation-ai-powered-operations)
 
-📖 **AWS docs:** [Documentation](https://docs.aws.amazon.com/) · [Whitepapers](https://aws.amazon.com/whitepapers/) · [re:Post](https://repost.aws/) · [Knowledge Center](https://repost.aws/knowledge-center) · [Prescriptive Guidance](https://aws.amazon.com/prescriptive-guidance/) · [Report abuse](https://www.repost.aws/knowledge-center/report-aws-abuse) · [Professional Services](https://aws.amazon.com/professional-services/) · [Partner Network](https://aws.amazon.com/partners/) · [Marketplace](https://aws.amazon.com/marketplace)
+## Technical resources and where to get help
 
-## Migration concepts
+| Need | Go to | Memory hook |
+|---|---|---|
+| Official guides and deep dives | **AWS Documentation**, **whitepapers**, **AWS blogs** | The textbook |
+| Ask the community a question | **AWS re:Post** | Community Q&A forum |
+| Official answers to common questions | **AWS Knowledge Center** (on re:Post) | AWS's FAQ for problems |
+| Proven migration/modernisation patterns and guides | **AWS Prescriptive Guidance** | Recipes from AWS experts |
+| Open and manage support cases | **AWS Support Center** | Help desk |
+| AWS events affecting my resources | **AWS Health Dashboard** / Health API | Weather report |
+| Report **abuse** of AWS resources (spam, phishing, malware, DDoS from AWS IPs) | **AWS Trust and Safety** team | Report misuse |
+| Hands-on expert help for a project | **AWS Professional Services**, **AWS solutions architects** | AWS consultants |
+| Third-party consultancy or software | **AWS Partner Network (APN)** partners | Certified helpers |
+| Security news and how-tos | **AWS Security Blog**, Security Center | Security newspaper |
 
-The common migration strategies are the **7 Rs**:
+⚠️ **Trap:** "Report that an AWS IP is sending spam/attacking us" → **AWS Trust and Safety**, not AWS Support.
 
-- **Retire:** remove what is no longer needed.
-- **Retain:** keep it where it is for now.
-- **Rehost:** “lift and shift” with minimal change.
-- **Relocate:** move infrastructure without redesigning workloads.
-- **Repurchase:** replace with another product, often SaaS.
-- **Replatform:** make limited cloud optimisations.
-- **Refactor / re-architect:** redesign to use cloud-native capabilities.
+📖 **Read more:** [Documentation](https://docs.aws.amazon.com/) · [Whitepapers](https://aws.amazon.com/whitepapers/) · [re:Post](https://repost.aws/) · [Knowledge Center](https://repost.aws/knowledge-center) · [Prescriptive Guidance](https://aws.amazon.com/prescriptive-guidance/) · [Report abuse](https://repost.aws/knowledge-center/report-aws-abuse) · [Professional Services](https://aws.amazon.com/professional-services/)
 
-📖 **AWS docs:** [Migration strategies (7 Rs)](https://docs.aws.amazon.com/prescriptive-guidance/latest/large-migration-guide/migration-strategies)
+## AWS Marketplace and the AWS Partner Network
 
-### AWS migration tools
+**📘 AWS definition:** AWS Marketplace is a curated digital catalogue that customers can use to find, buy, deploy, and manage third-party software, data, and services to build solutions and run their businesses.
 
-| Service | What it does |
-|---|---|
-| **AWS Application Discovery Service** | Collects data about on-premises servers and dependencies to plan a migration. ⚠️ AWS says it is no longer open to new customers and points to AWS Transform instead, but it is still on the exam's in-scope list. |
-| **AWS Migration Hub** | One place to track migration progress across tools |
-| **Migration Evaluator** | Builds a business case and cost estimate for moving to AWS |
-| **AWS Application Migration Service (MGN)** | Automated **lift and shift (rehost)** of servers. ⚠️ Renamed **AWS Transform MGN** in June 2026; the exam guide may still use the old name. |
-| **AWS DMS / SCT** | Move databases and convert schemas; see [Storage and databases](03-storage-and-databases.md#aws-database-migration-service-aws-dms) |
+**💡 Simple definition:** **An app store for business software that runs on AWS**, billed on your AWS invoice.
 
-📖 **AWS docs:** [Migration Hub](https://docs.aws.amazon.com/migrationhub/latest/ug/whatishub.html) · [Application Discovery Service](https://docs.aws.amazon.com/application-discovery/latest/userguide/what-is-appdiscovery.html) · [Migration Evaluator](https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-tools/discovery-migration-evaluator.html) · [AWS Transform MGN (Application Migration Service)](https://docs.aws.amazon.com/mgn/latest/ug/what-is-application-migration-service.html) · [MGN rename announcement](https://aws.amazon.com/about-aws/whats-new/2026/06/aws-transform-mgn-rebrand/)
+**🔑 Exam keywords:** `third-party software` · `ISV` · `buy and deploy` · `pay on the AWS bill` · `private offers` · `BYOL` · `APN partners`
 
+**🎯 What they test**
+
+- Thousands of listings from **independent software vendors (ISVs)**: security tools, AMIs, SaaS, data, ML models, professional services.
+- Pricing options: free, hourly/usage, annual, **BYOL**, **private offers** (custom negotiated prices). Billing goes on the AWS bill.
+- Marketplace helps with **cost management** (one bill), **governance** (private marketplace of approved products), and **entitlement** (licence management).
+- **AWS Partner Network (APN):** consulting partners and **system integrators** (help you build/migrate) and **software partners/ISVs** (build products). **Benefits of being a partner:** training and certification, partner events, marketing and funding programmes, **partner volume discounts**.
+
+**⚠️ Exam traps**
+
+- **Buy third-party** software → Marketplace. **Internal approved** catalogue → Service Catalog.
+
+📖 **Read more:** [What is AWS Marketplace?](https://docs.aws.amazon.com/marketplace/latest/buyerguide/what-is-marketplace.html) · [AWS Marketplace](https://aws.amazon.com/marketplace) · [AWS Partner Network](https://aws.amazon.com/partners/)
+
+---
+
+## Top traps on this page
+
+1. **Elasticity** = automatic scaling with demand; **scalability** = ability to grow.
+2. Multiple **AZs** = high availability; multiple **Regions** = DR / data sovereignty.
+3. Most important Region factor is usually **compliance / data residency**.
+4. IAM, Route 53, CloudFront, Organizations are **global**.
+5. Well-Architected = **workload**; CAF = **organisation**.
+6. "Skills/training" = CAF **People**; "risk/portfolio/finance" = CAF **Governance**.
+7. Rehost = **lift and shift**; Replatform = **lift, tinker, and shift**; Repurchase = **SaaS**.
+8. Data **in** is free; data **out** is charged.
+9. Basic Support has **no technical cases**; TAM starts at **Enterprise**.
+10. Abuse reports → **Trust and Safety**.
 
 [← Exam overview](00-exam-overview.md) | [Index](README.md) | [Compute and networking →](02-compute-and-networking.md)
